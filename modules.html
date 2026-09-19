@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My modules — Tutor 101</title>
+<meta name="description" content="Your subscribed modules, and modules available to subscribe to.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+
+<header class="app-header">
+  <div class="wrap app-header-inner">
+    <a class="logo" href="index.html">Tutor 101</a>
+    <div class="header-fill"></div>
+    <div class="app-header-actions">
+      <span class="user-name" id="headerUserName"></span>
+      <span class="avatar" id="headerAvatar">…</span>
+      <a class="btn btn-text" href="#" id="logoutLink">Log out</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" style="padding: 40px 24px 80px;">
+
+  <section style="margin-bottom: 56px;">
+    <h1 class="section-title">My modules</h1>
+    <div class="module-grid" id="myModulesList">
+      <p>Loading…</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Available modules</h2>
+    <div class="module-grid" id="availableModulesList">
+      <p>Loading…</p>
+    </div>
+  </section>
+
+</main>
+
+<dialog id="paymentModal" class="payment-modal">
+  <h2>Subscribe to <span id="modalModuleName"></span></h2>
+  <p>Simulated payment — this is a coursework prototype, so no real payment gateway is involved.</p>
+  <p class="payment-amount">R<span id="modalAmount"></span> <span class="payment-amount-unit">/ month</span></p>
+  <div class="payment-actions">
+    <button class="btn btn-outline btn-sm" id="modalCancel" type="button">Cancel</button>
+    <button class="btn btn-primary btn-sm" id="modalPay" type="button">Pay now</button>
+  </div>
+  <p class="payment-status" id="modalStatus" hidden></p>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/session.js"></script>
+<script src="js/modules.js"></script>
+</body>
+</html>

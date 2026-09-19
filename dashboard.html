@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module dashboard — Tutor 101</title>
+<meta name="description" content="Your module dashboard: sessions, announcements, notes, past papers and support requests.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+
+<header class="app-header">
+  <div class="wrap app-header-inner">
+    <a class="logo" href="index.html">Tutor 101</a>
+
+    <nav class="module-context" aria-label="Breadcrumb">
+      <a href="modules.html" class="module-context-back">My modules</a>
+      <span class="context-sep">›</span>
+      <span class="context-current" id="headerModuleName">Loading module…</span>
+    </nav>
+
+    <div class="app-header-actions">
+      <span class="user-name" id="headerUserName"></span>
+      <span class="avatar" id="headerAvatar">…</span>
+      <a class="btn btn-text" href="#" id="logoutLink">Log out</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="emptyState" hidden style="padding:60px 24px;">
+  <h1 class="section-title">No subscribed modules yet</h1>
+  <p>Once you subscribe to a module it'll show up here, with sessions, notes, past papers and everything else that module unlocks.</p>
+  <a class="btn btn-primary" href="modules.html">Browse modules</a>
+</div>
+
+<div class="dashboard-shell wrap" id="dashboardShell" hidden>
+
+  <aside class="dashboard-nav">
+    <nav aria-label="Module dashboard sections">
+      <button class="dash-tab is-active" data-panel="overview" type="button">Overview</button>
+      <button class="dash-tab" data-panel="sessions" type="button">Sessions</button>
+      <button class="dash-tab" data-panel="announcements" type="button">Announcements</button>
+      <button class="dash-tab" data-panel="notes" type="button">Notes &amp; guides</button>
+      <button class="dash-tab" data-panel="papers" type="button">Past papers</button>
+      <button class="dash-tab" data-panel="requests" type="button">Support requests</button>
+      <button class="dash-tab" data-panel="tutor" type="button">Tutor profile</button>
+      <button class="dash-tab" data-panel="notifications" type="button">Notifications</button>
+    </nav>
+  </aside>
+
+  <div class="dashboard-content">
+
+    <section class="dash-panel is-active" id="panel-overview">
+      <div class="module-letterhead">
+        <span class="card-code" id="letterheadCode">—</span>
+        <h1 id="letterheadName">—</h1>
+        <p class="letterhead-tutor" id="letterheadTutor">Tutor: —</p>
+        <div class="letterhead-meta">
+          <span class="tag tag-available" id="letterheadStatus">—</span>
+          <span class="letterhead-expiry" id="letterheadExpiry"></span>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>Next session</h3>
+          <p class="overview-figure" id="statNextSession">—</p>
+          <p id="statNextSessionDesc"></p>
+        </div>
+        <div class="overview-card">
+          <h3>Announcements</h3>
+          <p class="overview-figure" id="statAnnouncements">—</p>
+          <p id="statAnnouncementsDesc"></p>
+        </div>
+        <div class="overview-card">
+          <h3>Support requests</h3>
+          <p class="overview-figure" id="statRequests">—</p>
+          <p id="statRequestsDesc"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="dash-panel" id="panel-sessions">
+      <h2 class="section-title">Upcoming sessions</h2>
+      <div class="session-list" id="sessionList">
+        <p>Loading sessions…</p>
+      </div>
+    </section>
+
+    <section class="dash-panel" id="panel-announcements">
+      <h2 class="section-title">Announcements</h2>
+      <div class="announcement-list" id="announcementList">
+        <p>Loading announcements…</p>
+      </div>
+    </section>
+
+    <section class="dash-panel" id="panel-notes">
+      <h2 class="section-title">Notes &amp; study guides</h2>
+
+      <h3 class="resource-group-title">Notes</h3>
+      <ul class="resource-list" id="notesList"><li><span>Loading…</span></li></ul>
+
+      <h3 class="resource-group-title">Study guides</h3>
+      <ul class="resource-list" id="guidesList"><li><span>Loading…</span></li></ul>
+    </section>
+
+    <section class="dash-panel" id="panel-papers">
+      <h2 class="section-title">Past examination papers</h2>
+      <ul class="resource-list" id="papersList"><li><span>Loading…</span></li></ul>
+    </section>
+
+    <section class="dash-panel" id="panel-requests">
+      <h2 class="section-title">Academic support requests</h2>
+
+      <form class="request-form" id="requestForm">
+        <div class="form-row">
+          <label for="reqTopic">Topic</label>
+          <input type="text" id="reqTopic" placeholder="e.g. SQL Joins" required>
+        </div>
+        <div class="form-row">
+          <label for="reqMessage">What are you stuck on?</label>
+          <textarea id="reqMessage" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Send to tutor</button>
+      </form>
+
+      <h3 class="resource-group-title">Your requests</h3>
+      <ul class="request-list" id="requestList"><li><p>Loading…</p></li></ul>
+    </section>
+
+    <section class="dash-panel" id="panel-tutor">
+      <h2 class="section-title">Tutor profile</h2>
+      <div class="tutor-profile" id="tutorProfile">
+        <p>Loading tutor profile…</p>
+      </div>
+    </section>
+
+    <section class="dash-panel" id="panel-notifications">
+      <h2 class="section-title">Notifications</h2>
+      <ul class="notification-list" id="notificationList"><li><p>Loading…</p></li></ul>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/session.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

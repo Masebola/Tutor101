@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create your account — Tutor 101</title>
+<meta name="description" content="Create a Tutor 101 account as a student or apply to tutor a module.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+<header class="auth-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">Tutor 101</a>
+  </div>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <span class="notch"></span>
+    <h1>Create your account</h1>
+    <p class="auth-sub">Join as a student to subscribe to modules, or apply to tutor the ones you know.</p>
+
+    <div class="role-tabs" role="tablist" aria-label="Account type">
+      <button type="button" class="role-tab is-active" data-role="student" role="tab" aria-selected="true">Student</button>
+      <button type="button" class="role-tab" data-role="tutor" role="tab" aria-selected="false">Tutor</button>
+    </div>
+
+    <form id="registerForm" novalidate>
+      <div class="form-row">
+        <label for="fullName">Full name</label>
+        <input type="text" id="fullName" name="fullName" required autocomplete="name">
+      </div>
+
+      <div class="form-row">
+        <label for="studentNumber">Student number</label>
+        <input type="text" id="studentNumber" name="studentNumber" required inputmode="numeric" autocomplete="off">
+      </div>
+
+      <div class="form-row">
+        <label for="email">University email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@university.ac.za">
+      </div>
+
+      <div class="form-row">
+        <label for="password">Password</label>
+        <div class="password-field">
+          <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+          <button type="button" class="password-toggle" aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="profilePicture">Profile picture <span class="optional">(optional)</span></label>
+        <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+      </div>
+
+      <fieldset class="tutor-fields" id="tutorFields" hidden>
+        <div class="form-row">
+          <label for="academicInfo">Academic background</label>
+          <textarea id="academicInfo" name="academicInfo" rows="3" placeholder="Year of study, average, relevant coursework"></textarea>
+        </div>
+
+        <div class="form-row">
+          <label for="supportingDocs">Supporting documents <span class="optional">(optional)</span></label>
+          <input type="file" id="supportingDocs" name="supportingDocs" multiple>
+        </div>
+
+        <p class="tutor-note">Tutor applications are reviewed by an administrator after your email is verified. Once approved, you'll be able to apply to tutor specific modules from your dashboard.</p>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">Create student account</button>
+      <p class="form-fineprint">Uses Supabase Auth — add your project's URL and key to js/supabaseClient.js to go live.</p>
+    </form>
+
+    <div class="auth-success" id="authSuccess" hidden>
+      <h2>Check your university email</h2>
+      <p id="successMessage">We've sent a verification link. Once verified, your student account will be ready to use.</p>
+      <a class="btn btn-outline" href="login.html">Go to log in</a>
+    </div>
+
+    <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
+  </div>
+</main>
+
+<footer class="auth-footer">
+  <div class="wrap"><p>© 2026 Tutor 101. Coursework prototype.</p></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Tutor 101</title>
+<meta name="description" content="Log in to your Tutor 101 account.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+<header class="auth-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">Tutor 101</a>
+  </div>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <span class="notch"></span>
+    <h1>Log in to Tutor 101</h1>
+    <p class="auth-sub">Students, tutors and administrators all log in here — your dashboard depends on your account.</p>
+
+    <form id="loginForm" novalidate>
+      <div class="form-row">
+        <label for="loginEmail">University email</label>
+        <input type="email" id="loginEmail" name="email" required autocomplete="email">
+      </div>
+
+      <div class="form-row">
+        <label for="loginPassword">Password</label>
+        <div class="password-field">
+          <input type="password" id="loginPassword" name="password" required autocomplete="current-password">
+          <button type="button" class="password-toggle" aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      <div class="form-row form-row--inline">
+        <label class="check"><input type="checkbox" name="remember"> Remember me</label>
+        <a href="#" class="forgot-link">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Log in</button>
+      <p class="form-fineprint">Uses Supabase Auth — add your project's URL and key to js/supabaseClient.js to go live.</p>
+    </form>
+
+    <p class="auth-switch">Don't have an account? <a href="register.html">Sign up</a></p>
+  </div>
+</main>
+
+<footer class="auth-footer">
+  <div class="wrap"><p>© 2026 Tutor 101. Coursework prototype.</p></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

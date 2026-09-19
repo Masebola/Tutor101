@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutor 101 — Peer tutoring, organized by module</title>
+<meta name="description" content="Browse your university's modules, subscribe to the ones you need, and get matched with a verified student tutor.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="logo" href="#home">Tutor 101</a>
+
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav">
+      <span></span><span></span><span></span>
+      <span class="sr-only">Menu</span>
+    </button>
+
+    <nav class="primary-nav" id="primaryNav">
+      <a href="#how-it-works">How it works</a>
+      <a href="#modules">Modules</a>
+      <a href="#features">For students</a>
+      <a href="#tutors">For tutors</a>
+      <div class="nav-actions">
+        <a class="btn btn-text" href="login.html">Log in</a>
+        <a class="btn btn-primary" href="register.html">Get started</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>Peer tutoring, organized the way your modules are.</h1>
+        <p class="lede">See every module your university offers tutoring for, subscribe to the ones you need, and get matched with a verified student tutor — sessions, notes and past papers included.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#modules">Browse modules</a>
+          <a class="btn btn-outline btn-lg" href="register.html?role=tutor">Become a tutor</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="false">
+        <div class="module-card module-card--hero">
+          <span class="notch"></span>
+          <span class="card-code">COM3217</span>
+          <h3 class="card-title">Database Design</h3>
+          <div class="card-rating">
+            <span class="stars">★★★★★</span>
+            <span class="rating-value">4.9 <span class="rating-count">(128 sessions)</span></span>
+          </div>
+          <p class="card-tutor">Tutor: Refilwe M.</p>
+          <div class="card-footer">
+            <div class="card-price">
+              <strong>R100</strong> / month
+              <span class="tag tag-available">Available</span>
+            </div>
+            <span class="btn btn-primary btn-sm">Subscribe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES STRIP -->
+  <section class="roles">
+    <div class="wrap roles-grid">
+      <div class="role">
+        <h2>Students</h2>
+        <p>Browse available modules, subscribe for R100 a month, and unlock sessions, notes and past papers for that module.</p>
+      </div>
+      <div class="role">
+        <h2>Tutors</h2>
+        <p>Apply to tutor the modules you know once you're approved, then run sessions and post resources for enrolled students.</p>
+      </div>
+      <div class="role">
+        <h2>Administrators</h2>
+        <p>Create and manage modules, review tutor applications, and keep the platform running safely.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how-it-works">
+    <div class="wrap">
+      <h2 class="section-title">How it works for students</h2>
+
+      <ol class="steps">
+        <li class="step">
+          <span class="step-number">1</span>
+          <div>
+            <h3>Browse modules</h3>
+            <p>See every module your university offers tutoring for, with pricing and tutor information up front — before you commit to anything.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-number">2</span>
+          <div>
+            <h3>Subscribe</h3>
+            <p>Pick the modules you need help with. R100 a month unlocks everything for that module — no per-session booking hassle.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-number">3</span>
+          <div>
+            <h3>Learn</h3>
+            <p>Join scheduled sessions, download notes and past papers, and send your tutor a support request when something specific trips you up.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- PHOTO BAND 1 -->
+  <section class="photo-band">
+    <div class="wrap photo-band-grid">
+      <figure class="photo-band-image">
+        <img src="https://images.pexels.com/photos/4778621/pexels-photo-4778621.jpeg?auto=compress&w=1260&h=750&dpr=1" alt="A group of students studying together in a bright, sunlit room, sharing notes and a laptop.">
+      </figure>
+      <div class="photo-band-copy">
+        <h2 class="section-title">Study the way you already do — just organized</h2>
+        <p>Most students already lean on a friend, a study group, or a senior who explains things well. Tutor 101 doesn't replace that — it just puts it behind your module, so you're not chasing contacts or hoping someone replies to a WhatsApp message the night before a test.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="wrap">
+      <h2 class="section-title">Everything a subscribed module unlocks</h2>
+
+      <div class="feature-grid">
+        <div class="feature feature--mustard">
+          <h3>Verified tutors</h3>
+          <p>Every tutor is reviewed and approved by an administrator before they can teach a module — no unverified strangers.</p>
+        </div>
+        <div class="feature feature--teal">
+          <h3>Scheduled sessions</h3>
+          <p>Weekly sessions with meeting links appear straight on your module dashboard, including recurring weekly slots.</p>
+        </div>
+        <div class="feature feature--mustard">
+          <h3>Notes &amp; past papers</h3>
+          <p>Past exam papers, study guides and notes are organized by module, so you're studying the right material.</p>
+        </div>
+        <div class="feature feature--teal">
+          <h3>Academic support requests</h3>
+          <p>Stuck on one specific thing? Send your tutor a focused request and track it through to an answer.</p>
+        </div>
+        <div class="feature feature--mustard">
+          <h3>Ratings &amp; reviews</h3>
+          <p>Only students who actually attended a session can leave a rating, so a tutor's score means something.</p>
+        </div>
+        <div class="feature feature--teal">
+          <h3>Announcements</h3>
+          <p>Tutors post schedule changes and extra sessions straight to everyone enrolled — nothing gets missed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHOTO BAND 2 -->
+  <section class="photo-band photo-band--reverse">
+    <div class="wrap photo-band-grid">
+      <div class="photo-band-copy">
+        <h2 class="section-title">Sessions that fit around your timetable</h2>
+        <p>Tutors run live sessions over Microsoft Teams, Google Meet or Jitsi. The link only shows up for students who've subscribed to that module, and if a session moves, you'll see the update on your dashboard before it happens — not after.</p>
+      </div>
+      <figure class="photo-band-image">
+        <img src="https://images.pexels.com/photos/4144923/pexels-photo-4144923.jpeg?auto=compress&w=1260&h=750&dpr=1" alt="A student taking notes at a laptop during an online video call session.">
+      </figure>
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <section class="modules" id="modules">
+    <div class="wrap">
+      <h2 class="section-title">Modules students are subscribing to</h2>
+
+      <div class="module-grid">
+        <div class="module-card">
+          <span class="notch"></span>
+          <span class="card-code">COM3217</span>
+          <h3 class="card-title">Database Design</h3>
+          <p class="card-desc">Introduction to database concepts, design and implementation.</p>
+          <div class="card-footer">
+            <div class="card-price"><strong>R100</strong> / month <span class="tag tag-available">Available</span></div>
+            <span class="btn btn-outline btn-sm">View module</span>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <span class="notch"></span>
+          <span class="card-code">MAT201</span>
+          <h3 class="card-title">Mathematics II</h3>
+          <p class="card-desc">Calculus and linear algebra fundamentals for second-year students.</p>
+          <div class="card-footer">
+            <div class="card-price"><strong>R100</strong> / month <span class="tag tag-available">Available</span></div>
+            <span class="btn btn-outline btn-sm">View module</span>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <span class="notch"></span>
+          <span class="card-code">CSC302</span>
+          <h3 class="card-title">Software Engineering</h3>
+          <p class="card-desc">Software development lifecycles, design patterns and team practice.</p>
+          <div class="card-footer">
+            <div class="card-price"><strong>R100</strong> / month <span class="tag tag-available">Available</span></div>
+            <span class="btn btn-outline btn-sm">View module</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="wrap">
+      <h2 class="section-title">What students are saying</h2>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial">
+          <p>“My tutor finally explained joins in a way that made sense, and I could go back and rewatch the session notes the night before the test.”</p>
+          <cite>Refilwe — COM3217 student</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>“I like that I know exactly what I'm paying for. One price, and I get the sessions, the notes and the past papers for that module.”</p>
+          <cite>Thabo — MAT201 student</cite>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- TUTORS CTA -->
+  <section class="tutors" id="tutors">
+    <div class="wrap tutors-grid">
+      <div>
+        <h2 class="section-title">Tutor the modules you know</h2>
+        <p>Apply once you're an approved tutor, and you can run sessions, publish resources and answer support requests for any module you're accepted to teach.</p>
+        <a class="btn btn-outline" href="register.html?role=tutor">Apply to tutor</a>
+      </div>
+      <ul class="tutor-list">
+        <li>Verified through an administrator review before you can teach</li>
+        <li>Apply for as many modules as you're qualified to teach</li>
+        <li>Set up recurring weekly sessions in a few clicks</li>
+        <li>Build a rating from students who actually attended</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta" id="get-started">
+    <div class="wrap cta-inner">
+      <h2>Ready to find your tutor?</h2>
+      <p>Registration takes a couple of minutes. Verify your university email, and you're straight into your dashboard.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#modules">Browse modules</a>
+        <a class="btn btn-outline-inverse btn-lg" href="register.html?role=tutor">Become a tutor</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <p class="logo logo--footer">Tutor 101</p>
+      <p>Peer tutoring, organized by module.</p>
+    </div>
+
+    <nav class="footer-col">
+      <h3>Platform</h3>
+      <a href="#how-it-works">How it works</a>
+      <a href="#modules">Modules</a>
+      <a href="#features">Features</a>
+    </nav>
+
+    <nav class="footer-col">
+      <h3>Account</h3>
+      <a href="login.html">Log in</a>
+      <a href="register.html">Sign up</a>
+      <a href="register.html?role=tutor">Become a tutor</a>
+    </nav>
+
+    <nav class="footer-col">
+      <h3>University</h3>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+      <a href="#">Help</a>
+    </nav>
+  </div>
+
+  <div class="wrap footer-bottom">
+    <p>© 2026 Tutor 101. Built for university students.</p>
+    <p class="footer-note">Coursework prototype — module data and pricing shown are illustrative.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
