@@ -14,6 +14,11 @@ In Authentication → Settings, make sure "Confirm email" is switched on — the
 registration flow depends on it (that's the "check your email" step students
 and tutors see after signing up).
 
+Also add wherever you're hosting the site (e.g. `https://yourdomain.com/login.html`,
+or `http://localhost:5500/login.html` for local testing) to Authentication →
+URL Configuration → Redirect URLs. Without this, Supabase rejects the
+confirmation link's redirect and the email link won't work.
+
 ## 4. Get your project keys
 In Settings → API, copy:
 - Project URL
