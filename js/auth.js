@@ -56,6 +56,7 @@ if (registerForm) {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}${window.location.pathname.replace('register.html', 'login.html')}`,
         data: {
           role,
           full_name: fullName,
