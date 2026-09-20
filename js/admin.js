@@ -1,7 +1,7 @@
 // ===== Admin dashboard: real tutor + module application review =====
 
 async function loadCount(table, filters) {
-  let query = supabase.from(table).select('id', { count: 'exact', head: true });
+  let query = supabaseClient.from(table).select('id', { count: 'exact', head: true });
   Object.entries(filters).forEach(([col, val]) => { query = query.eq(col, val); });
   const { count } = await query;
   return count || 0;
@@ -22,17 +22,17 @@ async function loadOverview() {
 }
 
 async function loadPendingTutors() {
-  const { data } = await supabase.from('profiles').select('*').eq('role', 'tutor').eq('tutor_status', 'pending').order('created_at', { ascending: true });
+  const { data } = await supabaseClient.from('profiles').select('*').eq('role', 'tutor').eq('tutor_status', 'pending').order('created_at', { ascending: true });
   return data || [];
 }
 
 async function loadApprovedTutors() {
-  const { data } = await supabase.from('profiles').select('*').eq('role', 'tutor').in('tutor_status', ['approved', 'suspended']).order('created_at', { ascending: true });
+  const { data } = await supabaseClient.from('profiles').select('*').eq('role', 'tutor').in('tutor_status', ['approved', 'suspended']).order('created_at', { ascending: true });
   return data || [];
 }
 
 async function loadRejectedTutors() {
-  const { data } = await supabase.from('profiles').select('*').eq('role', 'tutor').eq('tutor_status', 'rejected').order('created_at', { ascending: true });
+  const { data } = await supabaseClient.from('profiles').select('*').eq('role', 'tutor').eq('tutor_status', 'rejected').order('created_at', { ascending: true });
   return data || [];
 }
 
@@ -118,7 +118,7 @@ function renderRejectedTutors(tutors) {
 }
 
 async function loadModuleApplications() {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('tutor_modules')
     .select('*, profiles(*), modules(*)')
     .eq('status', 'pending')
@@ -196,7 +196,7 @@ document.addEventListener('click', async (e) => {
     if (approveTutor || rejectTutor) {
       const card = (approveTutor || rejectTutor).closest('.applicant-card');
       const status = approveTutor ? 'approved' : 'rejected';
-      const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
+      const { error } = await supabaseClient.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
       if (error) throw error;
       await refreshTutors();
     }
@@ -204,14 +204,14 @@ document.addEventListener('click', async (e) => {
     if (suspendTutor || reinstateTutor) {
       const card = (suspendTutor || reinstateTutor).closest('.applicant-card');
       const status = suspendTutor ? 'suspended' : 'approved';
-      const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
+      const { error } = await supabaseClient.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
       if (error) throw error;
       await refreshTutors();
     }
 
     if (reconsiderTutor) {
       const card = reconsiderTutor.closest('.applicant-card');
-      const { error } = await supabase.from('profiles').update({ tutor_status: 'pending' }).eq('id', card.dataset.id);
+      const { error } = await supabaseClient.from('profiles').update({ tutor_status: 'pending' }).eq('id', card.dataset.id);
       if (error) throw error;
       await refreshTutors();
     }
@@ -219,7 +219,7 @@ document.addEventListener('click', async (e) => {
     if (approveModule || rejectModule) {
       const card = (approveModule || rejectModule).closest('.applicant-card');
       const status = approveModule ? 'approved' : 'rejected';
-      const { error } = await supabase.from('tutor_modules').update({ status }).eq('id', card.dataset.id);
+      const { error } = await supabaseClient.from('tutor_modules').update({ status }).eq('id', card.dataset.id);
       if (error) throw error;
       renderModuleApplications(await loadModuleApplications());
     }

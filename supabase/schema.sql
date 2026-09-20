@@ -48,8 +48,7 @@ create table tutor_modules (
   tutor_id   uuid references profiles(id) on delete cascade,
   module_id  uuid references modules(id) on delete cascade,
   status     application_status not null default 'pending',
-  applied_at timestamptz not null default now(),
-  unique (tutor_id, module_id)
+  applied_at timestamptz not null default now()
 );
 
 create table subscriptions (
@@ -59,8 +58,7 @@ create table subscriptions (
   status       subscription_status not null default 'active',
   amount       numeric(10,2) not null,
   start_date   date not null default current_date,
-  expiry_date  date not null,
-  unique (student_id, module_id)
+  expiry_date  date not null
 );
 
 create table sessions (
@@ -125,6 +123,17 @@ create table reviews (
   created_at timestamptz not null default now(),
   unique (student_id, session_id)
 );
+
+-- A plain unique(student_id, module_id) or unique(tutor_id, module_id) would
+-- permanently block resubscribing/reapplying after a subscription lapses or
+-- an application is rejected. These partial indexes only enforce uniqueness
+-- among the "live" rows, so history can pile up and a fresh attempt still
+-- works.
+create unique index subscriptions_one_active_per_module
+  on subscriptions (student_id, module_id) where status = 'active';
+
+create unique index tutor_modules_one_live_application
+  on tutor_modules (tutor_id, module_id) where status in ('pending', 'approved');
 
 -- ---------- Seed the three example modules from the outline ----------
 insert into modules (code, name, department, description, price) values

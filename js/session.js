@@ -4,7 +4,7 @@
 //   if (!ctx) return; // already redirected, or a fatal error was shown
 async function requireProfile(allowedRoles) {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
     if (sessionError) throw sessionError;
 
     if (!session) {
@@ -12,7 +12,7 @@ async function requireProfile(allowedRoles) {
       return null;
     }
 
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
@@ -51,7 +51,7 @@ function showFatalError(message) {
 }
 
 async function signOut() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   window.location.href = 'login.html';
 }
 

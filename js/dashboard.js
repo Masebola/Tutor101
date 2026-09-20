@@ -5,7 +5,7 @@ let currentSubscription = null;
 let currentStudentId = null;
 
 async function loadSubscription(studentId, moduleCode) {
-  let query = supabase
+  let query = supabaseClient
     .from('subscriptions')
     .select('*, modules!inner(*)')
     .eq('student_id', studentId)
@@ -29,7 +29,7 @@ function renderLetterhead(subscription, module) {
 }
 
 async function loadTutor(moduleId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('tutor_modules')
     .select('tutor_id, profiles(*)')
     .eq('module_id', moduleId)
@@ -70,7 +70,7 @@ function renderTutorProfile(tutor) {
 }
 
 async function loadSessions(moduleId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('sessions')
     .select('*')
     .eq('module_id', moduleId)
@@ -120,7 +120,7 @@ function renderSessions(sessions) {
 }
 
 async function loadAnnouncements(moduleId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('announcements')
     .select('*')
     .eq('module_id', moduleId)
@@ -151,13 +151,13 @@ function renderAnnouncements(items) {
 }
 
 async function openResourceDownload(storagePath) {
-  const { data, error } = await supabase.storage.from('resources').createSignedUrl(storagePath, 60);
+  const { data, error } = await supabaseClient.storage.from('resources').createSignedUrl(storagePath, 60);
   if (error) { alert(error.message); return; }
   window.open(data.signedUrl, '_blank', 'noopener');
 }
 
 async function loadResources(moduleId, category) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('resources')
     .select('*')
     .eq('module_id', moduleId)
@@ -183,7 +183,7 @@ function renderResourceList(listId, items) {
 }
 
 async function loadRequests(studentId, moduleId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('support_requests')
     .select('*')
     .eq('student_id', studentId)
@@ -231,7 +231,7 @@ function renderRequests(items) {
 }
 
 async function loadNotifications(userId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('notifications')
     .select('*')
     .eq('user_id', userId)
@@ -318,7 +318,7 @@ if (requestForm) {
     const message = document.getElementById('reqMessage').value.trim();
     if (!topic || !message) return;
 
-    const { error } = await supabase.from('support_requests').insert({
+    const { error } = await supabaseClient.from('support_requests').insert({
       student_id: currentStudentId,
       module_id: currentModule.id,
       topic,

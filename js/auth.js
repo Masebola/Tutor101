@@ -53,7 +53,7 @@ if (registerForm) {
     submitBtn.textContent = 'Creating account…';
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
@@ -108,13 +108,13 @@ if (loginForm) {
     loginBtn.textContent = 'Logging in…';
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
         alert(error.message);
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabaseClient
         .from('profiles')
         .select('role')
         .eq('id', data.user.id)

@@ -4,7 +4,7 @@ let currentTutorId = null;
 let approvedModules = []; // [{ id, code, name }, ...]
 
 async function loadAllModules() {
-  const { data } = await supabase.from('modules').select('*').eq('status', 'available').order('code');
+  const { data } = await supabaseClient.from('modules').select('*').eq('status', 'available').order('code');
   return data || [];
 }
 
@@ -31,7 +31,7 @@ function populateApplySelect(allModules, applications) {
 }
 
 async function loadApprovedModules(tutorId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('tutor_modules')
     .select('status, modules(*)')
     .eq('tutor_id', tutorId);
@@ -84,7 +84,7 @@ function renderModulesList(applications) {
 }
 
 async function loadSessions(tutorId) {
-  const { data } = await supabase.from('sessions').select('*').eq('tutor_id', tutorId).order('start_time', { ascending: true });
+  const { data } = await supabaseClient.from('sessions').select('*').eq('tutor_id', tutorId).order('start_time', { ascending: true });
   return data || [];
 }
 
@@ -108,7 +108,7 @@ function renderSessions(sessions) {
 }
 
 async function loadResources(tutorId, category) {
-  const { data } = await supabase.from('resources').select('*').eq('uploaded_by', tutorId).eq('category', category).order('uploaded_at', { ascending: false });
+  const { data } = await supabaseClient.from('resources').select('*').eq('uploaded_by', tutorId).eq('category', category).order('uploaded_at', { ascending: false });
   return data || [];
 }
 
@@ -124,7 +124,7 @@ function renderResourceList(listId, items) {
 }
 
 async function loadAnnouncements(tutorId) {
-  const { data } = await supabase.from('announcements').select('*').eq('posted_by', tutorId).order('created_at', { ascending: false });
+  const { data } = await supabaseClient.from('announcements').select('*').eq('posted_by', tutorId).order('created_at', { ascending: false });
   return data || [];
 }
 
@@ -141,7 +141,7 @@ function renderAnnouncements(items) {
 
 async function loadRequests(moduleIds) {
   if (!moduleIds.length) return [];
-  const { data } = await supabase.from('support_requests').select('*').in('module_id', moduleIds).order('created_at', { ascending: false });
+  const { data } = await supabaseClient.from('support_requests').select('*').in('module_id', moduleIds).order('created_at', { ascending: false });
   return data || [];
 }
 
@@ -219,7 +219,7 @@ function renderProfile(profile) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newBio = editBio.value.trim();
-    const { error } = await supabase.from('profiles').update({ bio: newBio }).eq('id', profile.id);
+    const { error } = await supabaseClient.from('profiles').update({ bio: newBio }).eq('id', profile.id);
     if (error) { alert(error.message); return; }
     bioEl.textContent = newBio || 'No biography added yet.';
     form.hidden = true;
@@ -296,7 +296,7 @@ if (sessionForm) {
     const startTime = new Date(`${date}T${time}`);
     const weekday = recurring ? startTime.toLocaleDateString('en-ZA', { weekday: 'long' }).toLowerCase() : null;
 
-    const { error } = await supabase.from('sessions').insert({
+    const { error } = await supabaseClient.from('sessions').insert({
       module_id: moduleId,
       tutor_id: currentTutorId,
       title,
@@ -320,7 +320,7 @@ document.addEventListener('click', async (e) => {
   if (!btn) return;
   const row = btn.closest('.session-row');
   const id = row.dataset.id;
-  const { error } = await supabase.from('sessions').delete().eq('id', id);
+  const { error } = await supabaseClient.from('sessions').delete().eq('id', id);
   if (error) { alert(error.message); return; }
   row.remove();
 });
@@ -339,10 +339,10 @@ if (resourceForm) {
     const module = approvedModules.find((m) => m.id === moduleId);
     const path = `${module ? module.code : 'module'}/${category}/${Date.now()}_${file.name}`;
 
-    const { error: uploadError } = await supabase.storage.from('resources').upload(path, file);
+    const { error: uploadError } = await supabaseClient.storage.from('resources').upload(path, file);
     if (uploadError) { alert(uploadError.message); return; }
 
-    const { error } = await supabase.from('resources').insert({
+    const { error } = await supabaseClient.from('resources').insert({
       module_id: moduleId,
       uploaded_by: currentTutorId,
       category,
@@ -365,8 +365,8 @@ document.addEventListener('click', async (e) => {
   const li = link.closest('li');
   const id = li.dataset.id;
   const path = li.dataset.path;
-  await supabase.storage.from('resources').remove([path]);
-  const { error } = await supabase.from('resources').delete().eq('id', id);
+  await supabaseClient.storage.from('resources').remove([path]);
+  const { error } = await supabaseClient.from('resources').delete().eq('id', id);
   if (error) { alert(error.message); return; }
   li.remove();
 });
@@ -381,7 +381,7 @@ if (announcementForm) {
     const body = document.getElementById('annBody').value.trim();
     if (!moduleId || !title || !body) return;
 
-    const { error } = await supabase.from('announcements').insert({ module_id: moduleId, posted_by: currentTutorId, title, body });
+    const { error } = await supabaseClient.from('announcements').insert({ module_id: moduleId, posted_by: currentTutorId, title, body });
     if (error) { alert(error.message); return; }
 
     announcementForm.reset();
@@ -398,7 +398,7 @@ document.addEventListener('click', async (e) => {
   const reply = card.querySelector('.reply-input').value.trim();
   if (!reply) return;
 
-  const { error } = await supabase.from('support_requests').update({ response: reply, status: 'answered' }).eq('id', id);
+  const { error } = await supabaseClient.from('support_requests').update({ response: reply, status: 'answered' }).eq('id', id);
   if (error) { alert(error.message); return; }
 
   const tag = card.querySelector('.tag');
@@ -415,7 +415,7 @@ if (applyModuleForm) {
     const moduleId = document.getElementById('applyModuleSelect').value;
     if (!moduleId) return;
 
-    const { error } = await supabase.from('tutor_modules').insert({ tutor_id: currentTutorId, module_id: moduleId, status: 'pending' });
+    const { error } = await supabaseClient.from('tutor_modules').insert({ tutor_id: currentTutorId, module_id: moduleId, status: 'pending' });
     if (error) { alert(error.message); return; }
 
     const applications = await loadApprovedModules(currentTutorId);

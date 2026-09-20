@@ -4,7 +4,7 @@ let currentStudentId = null;
 let selectedModule = null;
 
 async function loadSubscriptions(studentId) {
-  const { data } = await supabase
+  const { data } = await supabaseClient
     .from('subscriptions')
     .select('*, modules(*)')
     .eq('student_id', studentId)
@@ -13,7 +13,7 @@ async function loadSubscriptions(studentId) {
 }
 
 async function loadAllModules() {
-  const { data } = await supabase.from('modules').select('*').eq('status', 'available').order('code');
+  const { data } = await supabaseClient.from('modules').select('*').eq('status', 'available').order('code');
   return data || [];
 }
 
@@ -113,7 +113,7 @@ modalPay.addEventListener('click', async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 700));
 
-    const { error } = await supabase.from('subscriptions').insert({
+    const { error } = await supabaseClient.from('subscriptions').insert({
       student_id: currentStudentId,
       module_id: selectedModule.id,
       amount: selectedModule.price,
