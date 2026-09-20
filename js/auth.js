@@ -52,74 +52,91 @@ if (registerForm) {
     const originalLabel = submitBtn.textContent;
     submitBtn.textContent = 'Creating account…';
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}${window.location.pathname.replace('register.html', 'login.html')}`,
-        data: {
-          role,
-          full_name: fullName,
-          student_number: studentNumber,
-          academic_info: academicInfo,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}${window.location.pathname.replace('register.html', 'login.html')}`,
+          data: {
+            role,
+            full_name: fullName,
+            student_number: studentNumber,
+            academic_info: academicInfo,
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      alert(error.message);
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      // Which modules to tutor is now chosen from the tutor dashboard once
+      // approved — applying requires a real session, which doesn't exist
+      // until after email verification (see js/tutor.js).
+
+      const successMessage = document.getElementById('successMessage');
+      if (successMessage) {
+        successMessage.textContent = role === 'tutor'
+          ? "We've sent a verification link. Once verified, your application moves to Pending Approval for an administrator to review. After approval you can apply to tutor specific modules from your dashboard."
+          : "We've sent a verification link. Once verified, your student account will be ready to use.";
+      }
+
+      registerForm.hidden = true;
+      document.getElementById('authSuccess').hidden = false;
+    } catch (err) {
+      alert(`Couldn't reach Supabase: ${err.message}. Check that js/supabaseClient.js has your real project URL and anon key, and that you're loading this page over http:// (not by double-clicking the file), then try again.`);
+    } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = originalLabel;
-      return;
     }
-
-    // Which modules to tutor is now chosen from the tutor dashboard once
-    // approved — applying requires a real session, which doesn't exist
-    // until after email verification (see js/tutor.js).
-
-    const successMessage = document.getElementById('successMessage');
-    if (successMessage) {
-      successMessage.textContent = role === 'tutor'
-        ? "We've sent a verification link. Once verified, your application moves to Pending Approval for an administrator to review. After approval you can apply to tutor specific modules from your dashboard."
-        : "We've sent a verification link. Once verified, your student account will be ready to use.";
-    }
-
-    registerForm.hidden = true;
-    document.getElementById('authSuccess').hidden = false;
   });
 }
 
 // ===== Login submit: sign in and route by role =====
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
+  const loginBtn = loginForm.querySelector('button[type="submit"]');
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    loginBtn.disabled = true;
+    const originalLabel = loginBtn.textContent;
+    loginBtn.textContent = 'Logging in…';
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert(error.message);
+        return;
+      }
 
-    if (profileError || !profile) {
-      alert("Signed in, but couldn't load your profile. Please try again.");
-      return;
-    }
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
 
-    if (profile.role === 'admin') {
-      window.location.href = 'admin.html';
-    } else if (profile.role === 'tutor') {
-      window.location.href = 'tutor.html';
-    } else {
-      window.location.href = 'dashboard.html';
+      if (profileError || !profile) {
+        alert("Signed in, but couldn't load your profile. Please try again.");
+        return;
+      }
+
+      if (profile.role === 'admin') {
+        window.location.href = 'admin.html';
+      } else if (profile.role === 'tutor') {
+        window.location.href = 'tutor.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+      return; // leaving the page — skip resetting the button below
+    } catch (err) {
+      alert(`Couldn't reach Supabase: ${err.message}. Check that js/supabaseClient.js has your real project URL and anon key, and that you're loading this page over http:// (not by double-clicking the file), then try again.`);
     }
+    loginBtn.disabled = false;
+    loginBtn.textContent = originalLabel;
   });
 }

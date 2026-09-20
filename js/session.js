@@ -1,33 +1,53 @@
 // ===== Shared auth guard =====
 // Call this at the top of a dashboard page's init function:
 //   const ctx = await requireProfile(['student']);
-//   if (!ctx) return; // already redirected
+//   if (!ctx) return; // already redirected, or a fatal error was shown
 async function requireProfile(allowedRoles) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (!session) {
+      window.location.href = 'login.html';
+      return null;
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (error || !profile) {
+      window.location.href = 'login.html';
+      return null;
+    }
+
+    if (allowedRoles && !allowedRoles.includes(profile.role)) {
+      if (profile.role === 'admin') window.location.href = 'admin.html';
+      else if (profile.role === 'tutor') window.location.href = 'tutor.html';
+      else window.location.href = 'dashboard.html';
+      return null;
+    }
+
+    return { session, profile };
+  } catch (err) {
+    showFatalError(`Couldn't reach Supabase: ${err.message}. Check that js/supabaseClient.js has your real project URL and anon key, and that you're loading this page over http:// (not by double-clicking the file).`);
     return null;
   }
+}
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
-
-  if (error || !profile) {
-    window.location.href = 'login.html';
-    return null;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(profile.role)) {
-    if (profile.role === 'admin') window.location.href = 'admin.html';
-    else if (profile.role === 'tutor') window.location.href = 'tutor.html';
-    else window.location.href = 'dashboard.html';
-    return null;
-  }
-
-  return { session, profile };
+// Replaces the page with a plain, visible error — used instead of a
+// redirect-on-failure, since redirecting to login.html would just hit the
+// same broken client there and loop silently.
+function showFatalError(message) {
+  document.body.innerHTML = `
+    <div style="max-width:480px;margin:80px auto;padding:0 24px;font:15px/1.6 -apple-system,sans-serif;text-align:center;color:#1F2E22;">
+      <h1 style="font-size:1.3rem;">Something went wrong</h1>
+      <p>${message}</p>
+      <p><a href="index.html" style="color:#3E7C6B;font-weight:600;">Back to home</a></p>
+    </div>
+  `;
 }
 
 async function signOut() {

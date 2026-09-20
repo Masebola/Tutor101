@@ -110,29 +110,35 @@ modalPay.addEventListener('click', async () => {
   modalStatus.hidden = false;
   modalStatus.textContent = 'Processing simulated payment…';
 
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
-  const { error } = await supabase.from('subscriptions').insert({
-    student_id: currentStudentId,
-    module_id: selectedModule.id,
-    amount: selectedModule.price,
-    expiry_date: addOneMonth(new Date()),
-  });
+    const { error } = await supabase.from('subscriptions').insert({
+      student_id: currentStudentId,
+      module_id: selectedModule.id,
+      amount: selectedModule.price,
+      expiry_date: addOneMonth(new Date()),
+    });
 
-  if (error) {
-    modalStatus.textContent = `Payment failed: ${error.message}`;
+    if (error) {
+      modalStatus.textContent = `Payment failed: ${error.message}`;
+      modalPay.disabled = false;
+      modalPay.textContent = 'Pay now';
+      return;
+    }
+
+    modalStatus.textContent = 'Payment successful — module joined!';
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    paymentModal.close();
+
+    const [subscriptions, allModules] = await Promise.all([loadSubscriptions(currentStudentId), loadAllModules()]);
+    renderMyModules(subscriptions);
+    renderAvailableModules(allModules, subscriptions);
+  } catch (err) {
+    modalStatus.textContent = `Couldn't reach Supabase: ${err.message}`;
     modalPay.disabled = false;
     modalPay.textContent = 'Pay now';
-    return;
   }
-
-  modalStatus.textContent = 'Payment successful — module joined!';
-  await new Promise((resolve) => setTimeout(resolve, 900));
-  paymentModal.close();
-
-  const [subscriptions, allModules] = await Promise.all([loadSubscriptions(currentStudentId), loadAllModules()]);
-  renderMyModules(subscriptions);
-  renderAvailableModules(allModules, subscriptions);
 });
 
 async function init() {
@@ -145,9 +151,13 @@ async function init() {
   document.getElementById('headerAvatar').textContent = initials(profile.full_name);
   document.getElementById('logoutLink').addEventListener('click', (e) => { e.preventDefault(); signOut(); });
 
-  const [subscriptions, allModules] = await Promise.all([loadSubscriptions(profile.id), loadAllModules()]);
-  renderMyModules(subscriptions);
-  renderAvailableModules(allModules, subscriptions);
+  try {
+    const [subscriptions, allModules] = await Promise.all([loadSubscriptions(profile.id), loadAllModules()]);
+    renderMyModules(subscriptions);
+    renderAvailableModules(allModules, subscriptions);
+  } catch (err) {
+    showFatalError(`Couldn't load your modules: ${err.message}. Check your connection and try refreshing.`);
+  }
 }
 
 init();

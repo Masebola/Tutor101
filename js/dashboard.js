@@ -269,39 +269,43 @@ async function init() {
   document.getElementById('headerAvatar').textContent = initials(profile.full_name);
   document.getElementById('logoutLink').addEventListener('click', (e) => { e.preventDefault(); signOut(); });
 
-  const moduleCode = new URLSearchParams(window.location.search).get('module');
-  const subscription = await loadSubscription(profile.id, moduleCode);
+  try {
+    const moduleCode = new URLSearchParams(window.location.search).get('module');
+    const subscription = await loadSubscription(profile.id, moduleCode);
 
-  if (!subscription) {
-    document.getElementById('emptyState').hidden = false;
-    return;
+    if (!subscription) {
+      document.getElementById('emptyState').hidden = false;
+      return;
+    }
+
+    currentSubscription = subscription;
+    currentModule = subscription.modules;
+    document.getElementById('dashboardShell').hidden = false;
+
+    renderLetterhead(subscription, currentModule);
+
+    const [tutor, sessions, announcements, notes, guides, papers, requests, notifications] = await Promise.all([
+      loadTutor(currentModule.id),
+      loadSessions(currentModule.id),
+      loadAnnouncements(currentModule.id),
+      loadResources(currentModule.id, 'notes'),
+      loadResources(currentModule.id, 'study_guide'),
+      loadResources(currentModule.id, 'past_paper'),
+      loadRequests(profile.id, currentModule.id),
+      loadNotifications(profile.id),
+    ]);
+
+    renderTutorProfile(tutor);
+    renderSessions(sessions);
+    renderAnnouncements(announcements);
+    renderResourceList('notesList', notes);
+    renderResourceList('guidesList', guides);
+    renderResourceList('papersList', papers);
+    renderRequests(requests);
+    renderNotifications(notifications);
+  } catch (err) {
+    showFatalError(`Couldn't load your dashboard: ${err.message}. Check your connection and try refreshing.`);
   }
-
-  currentSubscription = subscription;
-  currentModule = subscription.modules;
-  document.getElementById('dashboardShell').hidden = false;
-
-  renderLetterhead(subscription, currentModule);
-
-  const [tutor, sessions, announcements, notes, guides, papers, requests, notifications] = await Promise.all([
-    loadTutor(currentModule.id),
-    loadSessions(currentModule.id),
-    loadAnnouncements(currentModule.id),
-    loadResources(currentModule.id, 'notes'),
-    loadResources(currentModule.id, 'study_guide'),
-    loadResources(currentModule.id, 'past_paper'),
-    loadRequests(profile.id, currentModule.id),
-    loadNotifications(profile.id),
-  ]);
-
-  renderTutorProfile(tutor);
-  renderSessions(sessions);
-  renderAnnouncements(announcements);
-  renderResourceList('notesList', notes);
-  renderResourceList('guidesList', guides);
-  renderResourceList('papersList', papers);
-  renderRequests(requests);
-  renderNotifications(notifications);
 }
 
 const requestForm = document.getElementById('requestForm');

@@ -31,6 +31,11 @@ async function loadApprovedTutors() {
   return data || [];
 }
 
+async function loadRejectedTutors() {
+  const { data } = await supabase.from('profiles').select('*').eq('role', 'tutor').eq('tutor_status', 'rejected').order('created_at', { ascending: true });
+  return data || [];
+}
+
 function renderPendingTutors(tutors) {
   const list = document.getElementById('pendingTutorList');
   if (!tutors.length) { list.innerHTML = '<li class="applicant-card"><p>No pending applications.</p></li>'; return; }
@@ -90,6 +95,28 @@ function renderApprovedTutors(tutors) {
   });
 }
 
+function renderRejectedTutors(tutors) {
+  const list = document.getElementById('rejectedTutorList');
+  if (!tutors.length) { list.innerHTML = '<li class="applicant-card"><p>No rejected applications.</p></li>'; return; }
+  list.innerHTML = tutors.map(() => `
+    <li class="applicant-card" data-id="">
+      <div class="applicant-main">
+        <div><h3></h3><p class="applicant-meta"></p></div>
+        <span class="tag tag-rejected">Rejected</span>
+      </div>
+      <div class="applicant-actions">
+        <button class="btn btn-outline btn-sm" data-action="reconsider-tutor" type="button">Reconsider</button>
+      </div>
+    </li>
+  `).join('');
+  list.querySelectorAll('.applicant-card').forEach((card, i) => {
+    const t = tutors[i];
+    card.dataset.id = t.id;
+    card.querySelector('h3').textContent = t.full_name;
+    card.querySelector('.applicant-meta').textContent = `Student no. ${t.student_number || '—'} · ${t.email || ''}`;
+  });
+}
+
 async function loadModuleApplications() {
   const { data } = await supabase
     .from('tutor_modules')
@@ -126,6 +153,7 @@ function renderModuleApplications(apps) {
 async function refreshTutors() {
   renderPendingTutors(await loadPendingTutors());
   renderApprovedTutors(await loadApprovedTutors());
+  renderRejectedTutors(await loadRejectedTutors());
   loadOverview();
 }
 
@@ -138,10 +166,15 @@ async function init() {
   document.getElementById('headerAvatar').textContent = initials(profile.full_name);
   document.getElementById('logoutLink').addEventListener('click', (e) => { e.preventDefault(); signOut(); });
 
-  loadOverview();
-  renderPendingTutors(await loadPendingTutors());
-  renderApprovedTutors(await loadApprovedTutors());
-  renderModuleApplications(await loadModuleApplications());
+  try {
+    loadOverview();
+    renderPendingTutors(await loadPendingTutors());
+    renderApprovedTutors(await loadApprovedTutors());
+    renderRejectedTutors(await loadRejectedTutors());
+    renderModuleApplications(await loadModuleApplications());
+  } catch (err) {
+    showFatalError(`Couldn't load the admin dashboard: ${err.message}. Check your connection and try refreshing.`);
+  }
 }
 
 document.addEventListener('click', async (e) => {
@@ -149,31 +182,51 @@ document.addEventListener('click', async (e) => {
   const rejectTutor = e.target.closest('[data-action="reject-tutor"]');
   const suspendTutor = e.target.closest('[data-action="suspend-tutor"]');
   const reinstateTutor = e.target.closest('[data-action="reinstate-tutor"]');
+  const reconsiderTutor = e.target.closest('[data-action="reconsider-tutor"]');
   const approveModule = e.target.closest('[data-action="approve-module"]');
   const rejectModule = e.target.closest('[data-action="reject-module"]');
 
-  if (approveTutor || rejectTutor) {
-    const card = (approveTutor || rejectTutor).closest('.applicant-card');
-    const status = approveTutor ? 'approved' : 'rejected';
-    const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
-    if (error) { alert(error.message); return; }
-    await refreshTutors();
-  }
+  if (!approveTutor && !rejectTutor && !suspendTutor && !reinstateTutor && !reconsiderTutor && !approveModule && !rejectModule) return;
 
-  if (suspendTutor || reinstateTutor) {
-    const card = (suspendTutor || reinstateTutor).closest('.applicant-card');
-    const status = suspendTutor ? 'suspended' : 'approved';
-    const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
-    if (error) { alert(error.message); return; }
-    await refreshTutors();
-  }
+  const btn = approveTutor || rejectTutor || suspendTutor || reinstateTutor || reconsiderTutor || approveModule || rejectModule;
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
 
-  if (approveModule || rejectModule) {
-    const card = (approveModule || rejectModule).closest('.applicant-card');
-    const status = approveModule ? 'approved' : 'rejected';
-    const { error } = await supabase.from('tutor_modules').update({ status }).eq('id', card.dataset.id);
-    if (error) { alert(error.message); return; }
-    renderModuleApplications(await loadModuleApplications());
+  try {
+    if (approveTutor || rejectTutor) {
+      const card = (approveTutor || rejectTutor).closest('.applicant-card');
+      const status = approveTutor ? 'approved' : 'rejected';
+      const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
+      if (error) throw error;
+      await refreshTutors();
+    }
+
+    if (suspendTutor || reinstateTutor) {
+      const card = (suspendTutor || reinstateTutor).closest('.applicant-card');
+      const status = suspendTutor ? 'suspended' : 'approved';
+      const { error } = await supabase.from('profiles').update({ tutor_status: status }).eq('id', card.dataset.id);
+      if (error) throw error;
+      await refreshTutors();
+    }
+
+    if (reconsiderTutor) {
+      const card = reconsiderTutor.closest('.applicant-card');
+      const { error } = await supabase.from('profiles').update({ tutor_status: 'pending' }).eq('id', card.dataset.id);
+      if (error) throw error;
+      await refreshTutors();
+    }
+
+    if (approveModule || rejectModule) {
+      const card = (approveModule || rejectModule).closest('.applicant-card');
+      const status = approveModule ? 'approved' : 'rejected';
+      const { error } = await supabase.from('tutor_modules').update({ status }).eq('id', card.dataset.id);
+      if (error) throw error;
+      renderModuleApplications(await loadModuleApplications());
+    }
+  } catch (err) {
+    alert(err.message || 'Something went wrong — check your connection and try again.');
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 });
 

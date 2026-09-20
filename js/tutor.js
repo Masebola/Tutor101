@@ -9,8 +9,10 @@ async function loadAllModules() {
 }
 
 function populateApplySelect(allModules, applications) {
-  const appliedIds = new Set(applications.map((a) => a.modules.id));
-  const remaining = allModules.filter((m) => !appliedIds.has(m.id));
+  const blockedIds = new Set(
+    applications.filter((a) => a.status === 'pending' || a.status === 'approved').map((a) => a.modules.id)
+  );
+  const remaining = allModules.filter((m) => !blockedIds.has(m.id));
   const select = document.getElementById('applyModuleSelect');
   select.innerHTML = '';
   if (!remaining.length) {
@@ -246,29 +248,33 @@ async function init() {
 
   document.getElementById('dashboardShell').hidden = false;
 
-  const applications = await loadApprovedModules(profile.id);
-  approvedModules = applications.filter((a) => a.status === 'approved').map((a) => a.modules);
-  populateModuleSelects(approvedModules);
-  renderModulesList(applications);
-  document.getElementById('statModules').textContent = approvedModules.length;
-  populateApplySelect(await loadAllModules(), applications);
+  try {
+    const applications = await loadApprovedModules(profile.id);
+    approvedModules = applications.filter((a) => a.status === 'approved').map((a) => a.modules);
+    populateModuleSelects(approvedModules);
+    renderModulesList(applications);
+    document.getElementById('statModules').textContent = approvedModules.length;
+    populateApplySelect(await loadAllModules(), applications);
 
-  const [sessions, notes, guides, papers, announcements, requests] = await Promise.all([
-    loadSessions(profile.id),
-    loadResources(profile.id, 'notes'),
-    loadResources(profile.id, 'study_guide'),
-    loadResources(profile.id, 'past_paper'),
-    loadAnnouncements(profile.id),
-    loadRequests(approvedModules.map((m) => m.id)),
-  ]);
+    const [sessions, notes, guides, papers, announcements, requests] = await Promise.all([
+      loadSessions(profile.id),
+      loadResources(profile.id, 'notes'),
+      loadResources(profile.id, 'study_guide'),
+      loadResources(profile.id, 'past_paper'),
+      loadAnnouncements(profile.id),
+      loadRequests(approvedModules.map((m) => m.id)),
+    ]);
 
-  renderSessions(sessions);
-  renderResourceList('notesList', notes);
-  renderResourceList('guidesList', guides);
-  renderResourceList('papersList', papers);
-  renderAnnouncements(announcements);
-  renderRequests(requests);
-  renderProfile(profile);
+    renderSessions(sessions);
+    renderResourceList('notesList', notes);
+    renderResourceList('guidesList', guides);
+    renderResourceList('papersList', papers);
+    renderAnnouncements(announcements);
+    renderRequests(requests);
+    renderProfile(profile);
+  } catch (err) {
+    showFatalError(`Couldn't load your dashboard: ${err.message}. Check your connection and try refreshing.`);
+  }
 }
 
 // ===== Create session =====
