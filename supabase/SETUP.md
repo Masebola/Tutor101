@@ -4,10 +4,26 @@
 Go to supabase.com, create a new project, and wait for it to finish provisioning.
 
 ## 2. Run the schema
-Open the SQL editor in your Supabase dashboard, paste in the contents of
-`supabase/schema.sql`, and run it. This creates every table, the auto-profile
-trigger, all the Row Level Security policies, and the Storage policies for
-the resources bucket, in one go.
+Open the SQL editor in your Supabase dashboard, paste in the entire contents
+of `supabase/schema.sql`, and run it. This creates every table, the
+auto-profile trigger, all the Row Level Security policies, and the Storage
+policies for the resources bucket, in one go.
+
+**Whenever this file changes** (I'll say so when it does), re-run the whole
+thing again the same way. The script starts by dropping everything Tutor 101
+owns before recreating it, so it's always safe to paste the *entire* file in
+and run it — don't try to run just the new part, and don't skip it if you
+see "already exists" errors from an older attempt; that error means it's
+time to run the current full file, not that you should leave it alone.
+
+If you'd already tried signing up before running the current version, do one
+more thing afterward: go to Authentication → Users and delete any test
+accounts you created. Dropping and recreating the `profiles` table doesn't
+touch these — they're a separate system table — so a leftover one will make
+Supabase say "User already registered" if you try that email again, and if
+its profile row never got created properly (e.g. from a broken trigger),
+logging in with it won't work right either. Cleanest to start those emails
+fresh.
 
 ## 3. Turn on email confirmation
 In Authentication → Settings, make sure "Confirm email" is switched on — the
@@ -60,3 +76,11 @@ requirement that admin accounts aren't self-registered. To get one:
 - **Notifications** — the `notifications` table exists, but nothing writes
   to it yet (e.g. a row created when a tutor posts an announcement or moves
   a session). Right now a student's Notifications panel will just be empty.
+
+## Troubleshooting
+If sign-up fails with something like "Database error saving new user" after
+re-running the current schema and clearing old test accounts, the generic
+error on screen won't say why — but Supabase's dashboard will. Check
+Logs → Postgres Logs (and Logs → Auth Logs) right after a failed attempt;
+the actual Postgres error (e.g. which constraint or column it choked on)
+shows up there even though the app only ever sees the generic message.

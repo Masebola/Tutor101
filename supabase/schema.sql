@@ -1,7 +1,52 @@
 -- ============================================================
 -- Tutor 101 — Supabase schema, triggers and Row Level Security
--- Run this once in your Supabase project's SQL editor.
+--
+-- Safe to run from scratch, and safe to RE-run any time this file is
+-- updated (e.g. after a fix in a later chat message). Postgres can't
+-- re-create something that already exists, so without a reset block a
+-- second run just fails on the first `create type` and stops — leaving
+-- your database on a mix of old and new. The block below drops
+-- everything Tutor 101 owns first, so every run starts from a clean,
+-- fully up-to-date slate.
+--
+-- ⚠️ This deletes all Tutor 101 rows (test accounts, sessions, etc.) —
+-- fine while you're still building, since there's no real data to lose.
+-- It does NOT touch other Supabase projects' data or auth.users itself;
+-- see supabase/SETUP.md if you need to also clear out test accounts
+-- from Authentication → Users.
 -- ============================================================
+
+drop trigger if exists on_auth_user_created on auth.users;
+drop trigger if exists protect_profile_fields_trigger on profiles;
+
+drop table if exists reviews cascade;
+drop table if exists notifications cascade;
+drop table if exists support_requests cascade;
+drop table if exists announcements cascade;
+drop table if exists resources cascade;
+drop table if exists sessions cascade;
+drop table if exists subscriptions cascade;
+drop table if exists tutor_modules cascade;
+drop table if exists modules cascade;
+drop table if exists profiles cascade;
+
+drop function if exists public.handle_new_user() cascade;
+drop function if exists public.protect_profile_fields() cascade;
+drop function if exists public.is_admin() cascade;
+
+drop type if exists user_role cascade;
+drop type if exists tutor_status cascade;
+drop type if exists module_status cascade;
+drop type if exists application_status cascade;
+drop type if exists subscription_status cascade;
+drop type if exists request_status cascade;
+drop type if exists resource_category cascade;
+
+-- storage.objects is Supabase's own table, shared across the project —
+-- drop only the policies this file adds to it, never the table itself.
+drop policy if exists "authenticated can read resources bucket" on storage.objects;
+drop policy if exists "authenticated can upload to resources bucket" on storage.objects;
+drop policy if exists "uploader can delete their own resource files" on storage.objects;
 
 create extension if not exists "uuid-ossp";
 
