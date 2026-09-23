@@ -85,6 +85,8 @@ p{ margin: 0 0 1em; color: var(--text-muted); max-width: 62ch; }
 .btn-text:hover{ color: var(--teal-dark); }
 .btn-lg{ padding: 0.85em 1.7em; font-size: 1rem; }
 .btn-sm{ padding: 0.45em 1em; font-size: 0.85rem; }
+.btn:disabled{ opacity: 0.5; cursor: not-allowed; }
+.form-row select:disabled{ opacity: 0.6; cursor: not-allowed; }
 
 /* ===== Header ===== */
 .site-header{
@@ -427,6 +429,8 @@ p{ margin: 0 0 1em; color: var(--text-muted); max-width: 62ch; }
   font-size: 0.8rem; font-weight: 700;
 }
 .avatar-lg{ width: 64px; height: 64px; font-size: 1.2rem; flex-shrink: 0; }
+.avatar img{ width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.profile-actions{ display: flex; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
 
 .dashboard-shell{
   display: grid; grid-template-columns: 220px 1fr; gap: 40px;

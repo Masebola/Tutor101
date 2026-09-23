@@ -47,6 +47,9 @@ drop type if exists resource_category cascade;
 drop policy if exists "authenticated can read resources bucket" on storage.objects;
 drop policy if exists "authenticated can upload to resources bucket" on storage.objects;
 drop policy if exists "uploader can delete their own resource files" on storage.objects;
+drop policy if exists "authenticated can upload their own avatar" on storage.objects;
+drop policy if exists "authenticated can replace their own avatar" on storage.objects;
+drop policy if exists "authenticated can delete their own avatar" on storage.objects;
 
 create extension if not exists "uuid-ossp";
 
@@ -191,21 +194,25 @@ insert into modules (code, name, department, description, price) values
 -- auth.users' metadata (see js/auth.js) — this trigger copies it into
 -- public.profiles so the rest of the app can just query profiles.
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   insert into public.profiles (id, role, full_name, student_number, email, academic_info, tutor_status)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'role', 'student')::user_role,
+    coalesce(new.raw_user_meta_data->>'role', 'student')::public.user_role,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     new.raw_user_meta_data->>'student_number',
     new.email,
     new.raw_user_meta_data->>'academic_info',
-    case when coalesce(new.raw_user_meta_data->>'role', 'student') = 'tutor' then 'pending'::tutor_status else null end
+    case when coalesce(new.raw_user_meta_data->>'role', 'student') = 'tutor' then 'pending'::public.tutor_status else null end
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -225,9 +232,10 @@ alter table reviews           enable row level security;
 
 -- Helper used throughout the policies below.
 create or replace function public.is_admin()
-returns boolean as $$
+returns boolean
+language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
-$$ language sql stable security definer;
+$$;
 
 -- profiles: everyone can see their own row; admins see everyone.
 create policy "view own profile"        on profiles for select using (auth.uid() = id);
@@ -256,16 +264,26 @@ create policy "admins update any profile" on profiles for update using (public.i
 -- columns back to their previous value unless the request comes from an
 -- admin, whatever the update statement asked for.
 create or replace function public.protect_profile_fields()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
-  if not public.is_admin() then
+  -- auth.uid() is null for direct SQL sessions (e.g. the Table Editor or
+  -- the SQL editor), which already bypass RLS entirely and are fully
+  -- trusted. Without this check, editing role there as instructed in
+  -- SETUP.md would silently get reverted, because is_admin() would see a
+  -- null auth.uid() and always evaluate to false. Only enforce the block
+  -- for normal authenticated requests coming through the app's API calls.
+  if auth.uid() is not null and not public.is_admin() then
     new.role := old.role;
     new.tutor_status := old.tutor_status;
     new.average_rating := old.average_rating;
   end if;
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 create trigger protect_profile_fields_trigger
   before update on profiles
@@ -367,3 +385,21 @@ create policy "authenticated can upload to resources bucket" on storage.objects
 create policy "uploader can delete their own resource files" on storage.objects
   for delete to authenticated
   using (bucket_id = 'resources' and owner = auth.uid());
+
+-- ---------- Storage: the "avatars" bucket ----------
+-- Create a bucket named "avatars" and leave it Public (unlike "resources")
+-- — profile pictures are meant to be freely visible wherever a profile is
+-- shown, so there's no read policy needed here; a public bucket serves
+-- files directly. These policies only cover writes, and only let someone
+-- touch their own folder (named after their user id).
+create policy "authenticated can upload their own avatar" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and owner = auth.uid());
+
+create policy "authenticated can replace their own avatar" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and owner = auth.uid());
+
+create policy "authenticated can delete their own avatar" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and owner = auth.uid());

@@ -44,13 +44,16 @@ In Settings → API, copy:
 Open `js/supabaseClient.js` and replace `SUPABASE_URL` and `SUPABASE_ANON_KEY`
 with the values from step 4.
 
-## 6. Create the Storage bucket
-In Storage, create a bucket named exactly `resources` and leave it **Private**
-(not public). `schema.sql` already adds the RLS policies that let signed-in
-users upload to it and read from it — the real gatekeeping happens at the
-database level (you can only get a signed download link for a file if you
-could first read its row in the `resources` table), so the bucket itself
-doesn't need to be public.
+## 6. Create the Storage buckets
+In Storage, create two buckets:
+- **`resources`** — leave it **Private**. `schema.sql` already adds the RLS
+  policies that let signed-in users upload to it and read from it — the
+  real gatekeeping happens at the database level (you can only get a
+  signed download link for a file if you could first read its row in the
+  `resources` table), so the bucket itself doesn't need to be public.
+- **`avatars`** — leave it **Public**. Profile pictures are meant to be
+  freely visible, so this one just serves files directly; `schema.sql`
+  still restricts uploads/deletes to each user's own folder.
 
 ## 7. Create your first administrator
 There's deliberately no "sign up as admin" option — that matches the outline's
@@ -69,8 +72,21 @@ requirement that admin accounts aren't self-registered. To get one:
   tutor/module approvals, and subscriptions.
 - `modules.html` — browsing modules and subscribing, with a simulated
   payment step that creates a real `subscriptions` row.
+- Tutor profile pictures — uploaded from the tutor's own "My profile"
+  panel (there's no session available at registration time to authorize a
+  Storage upload, so this had to live on a page a tutor visits after
+  logging in). Students see it automatically once it's set, on their
+  module dashboard's Tutor profile panel.
 
 ## What isn't built yet
+- **A student "my profile" panel** — there's currently no page for a
+  student to set their own profile picture or edit their details after
+  registering; tutors have this, students don't yet.
+- **Tutor supporting documents** — the registration outline mentions
+  uploading supporting documents alongside a tutor application, but for
+  the same session-timing reason as the profile picture, there's nowhere
+  for that upload (or an admin view of it) to live yet. The academic
+  background textarea is the only supporting info captured for now.
 - **Reviews/ratings** (outline section 21) — the `reviews` table and its RLS
   exist, but there's no UI for a student to leave one yet.
 - **Notifications** — the `notifications` table exists, but nothing writes
@@ -84,3 +100,13 @@ error on screen won't say why — but Supabase's dashboard will. Check
 Logs → Postgres Logs (and Logs → Auth Logs) right after a failed attempt;
 the actual Postgres error (e.g. which constraint or column it choked on)
 shows up there even though the app only ever sees the generic message.
+
+One specific case worth knowing about: if that log shows something like
+`type "user_role" does not exist` even though the schema clearly created
+it, it's a Supabase-specific quirk — the signup trigger runs under an
+internal role (`supabase_auth_admin`) whose `search_path` deliberately
+excludes `public` for security reasons. `security definer` changes who the
+function runs *as*, not what schemas it can see unqualified, so without an
+explicit `set search_path = public` on the function (and fully qualifying
+enum casts as `public.user_role` rather than just `user_role`), the type
+lookup fails. `schema.sql`'s functions already do both of these now.
