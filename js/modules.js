@@ -42,7 +42,7 @@ function renderMyModules(subscriptions) {
     card.querySelector('.card-code').textContent = s.modules.code;
     card.querySelector('.card-title').textContent = s.modules.name;
     card.querySelector('.tag').textContent = 'Active';
-    card.querySelector('.letterhead-expiry').textContent = `Renews ${formatDate(s.expiry_date)}`;
+    card.querySelector('.letterhead-expiry').textContent = `Renews ${formatDateOnly(s.expiry_date)}`;
     card.querySelector('a').href = `dashboard.html?module=${s.modules.code}`;
   });
 }
@@ -81,9 +81,11 @@ function renderAvailableModules(allModules, subscriptions) {
 }
 
 function addOneMonth(date) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString().split('T')[0];
+  const d = new Date(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 const paymentModal = document.getElementById('paymentModal');

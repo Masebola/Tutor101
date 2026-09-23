@@ -9,7 +9,7 @@
 // our own top-level `const supabase = ...` collides with it and throws a
 // fatal syntax error that silently breaks this whole file.
 
-const SUPABASE_URL = 'https://kdjexvklmvfujfawlpxz.supabase.co';
+const SUPABASE_URL = 'https://kdjexvklmvfujfawlpxz.supabase.coo';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkamV4dmtsbXZmdWpmYXdscHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MjQwNzEsImV4cCI6MjEwNTQwMDA3MX0.2Vrh__7Z06k00DN9WfcO9-ZyqpIu8unLgqHSm-m1Lbc';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

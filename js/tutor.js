@@ -40,16 +40,28 @@ async function loadApprovedModules(tutorId) {
 
 function populateModuleSelects(modules) {
   const selects = [document.getElementById('sessModule'), document.getElementById('resModule'), document.getElementById('annModule')];
-  selects.forEach((sel) => {
+  const forms = [document.getElementById('sessionForm'), document.getElementById('resourceForm'), document.getElementById('announcementForm')];
+
+  selects.forEach((sel, i) => {
     if (!sel) return;
     sel.innerHTML = '';
+    const submitBtn = forms[i] ? forms[i].querySelector('button[type="submit"]') : null;
+
     if (!modules.length) {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = 'No approved modules';
+      opt.textContent = 'No approved modules yet';
       sel.appendChild(opt);
+      sel.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.title = 'Apply to tutor a module first, from My modules — this unlocks once an administrator approves it.';
+      }
       return;
     }
+
+    sel.disabled = false;
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.title = ''; }
     modules.forEach((m) => {
       const opt = document.createElement('option');
       opt.value = m.id;
@@ -77,9 +89,9 @@ function renderModulesList(applications) {
     const a = applications[i];
     card.querySelector('h3').textContent = `${a.modules.code} — ${a.modules.name}`;
     const tag = card.querySelector('.tag');
-    if (a.status === 'approved') { tag.textContent = 'Active'; tag.className = 'tag tag-available'; }
+    if (a.status === 'approved') { tag.textContent = 'Active'; tag.className = 'tag tag-available'; card.querySelector('.applicant-meta').textContent = "You're approved to tutor this module."; }
     else if (a.status === 'pending') { tag.textContent = 'Pending review'; tag.className = 'tag tag-open'; card.querySelector('.applicant-meta').textContent = 'Application submitted, awaiting an administrator.'; }
-    else { tag.textContent = 'Rejected'; tag.className = 'tag tag-rejected'; }
+    else { tag.textContent = 'Rejected'; tag.className = 'tag tag-rejected'; card.querySelector('.applicant-meta').textContent = 'This application was not approved.'; }
   });
 }
 
@@ -154,7 +166,7 @@ function renderRequests(items) {
         <div>
           <h3></h3>
           <p class="applicant-meta"></p>
-          <p></p>
+          <p class="request-message"></p>
         </div>
         <span class="tag"></span>
       </div>
@@ -170,7 +182,7 @@ function renderRequests(items) {
     card.dataset.id = r.id;
     card.querySelector('h3').textContent = r.topic;
     card.querySelector('.applicant-meta').textContent = `Submitted ${formatDate(r.created_at)}`;
-    card.querySelector('.applicant-main > div > p:last-child').textContent = `"${r.message}"`;
+    card.querySelector('.request-message').textContent = `"${r.message}"`;
     const tag = card.querySelector('.tag');
     tag.textContent = r.status.replace('_', ' ');
     tag.className = r.status === 'answered' || r.status === 'closed' ? 'tag tag-available' : 'tag tag-open';
@@ -192,14 +204,29 @@ function renderProfile(profile) {
       <p id="profileBio"></p>
       <div class="card-rating"><span class="stars">★★★★★</span><span class="rating-value"></span></div>
       <p class="tutor-email"></p>
-      <button class="btn btn-outline btn-sm" id="editProfileBtn" type="button">Edit profile</button>
+      <div class="profile-actions">
+        <button class="btn btn-outline btn-sm" id="editProfileBtn" type="button">Edit profile</button>
+        <button class="btn btn-outline btn-sm" id="changePictureBtn" type="button">Change picture</button>
+        <input type="file" id="avatarFile" accept="image/*" hidden>
+      </div>
       <form class="panel-form" id="profileForm" hidden style="margin-top:16px;">
         <div class="form-row"><label for="editBio">Short biography</label><textarea id="editBio" rows="3"></textarea></div>
         <button type="submit" class="btn btn-primary btn-sm">Save</button>
       </form>
     </div>
   `;
-  container.querySelector('.avatar').textContent = initials(profile.full_name);
+
+  const avatarEl = container.querySelector('.avatar');
+  if (profile.avatar_url) {
+    avatarEl.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = profile.avatar_url;
+    img.alt = `${profile.full_name}'s profile picture`;
+    avatarEl.appendChild(img);
+  } else {
+    avatarEl.textContent = initials(profile.full_name);
+  }
+
   container.querySelector('h3').textContent = profile.full_name;
   container.querySelector('.tutor-academic').textContent = profile.academic_info || '';
   container.querySelector('#profileBio').textContent = profile.bio || 'No biography added yet.';
@@ -223,6 +250,45 @@ function renderProfile(profile) {
     if (error) { alert(error.message); return; }
     bioEl.textContent = newBio || 'No biography added yet.';
     form.hidden = true;
+  });
+
+  const changePictureBtn = container.querySelector('#changePictureBtn');
+  const avatarFile = container.querySelector('#avatarFile');
+
+  changePictureBtn.addEventListener('click', () => avatarFile.click());
+
+  avatarFile.addEventListener('change', async () => {
+    const file = avatarFile.files[0];
+    if (!file) return;
+
+    const originalLabel = changePictureBtn.textContent;
+    changePictureBtn.disabled = true;
+    changePictureBtn.textContent = 'Uploading…';
+
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${profile.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabaseClient.storage.from('avatars').getPublicUrl(path);
+      const { error: updateError } = await supabaseClient.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', profile.id);
+      if (updateError) throw updateError;
+
+      avatarEl.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = urlData.publicUrl;
+      img.alt = `${profile.full_name}'s profile picture`;
+      avatarEl.appendChild(img);
+      profile.avatar_url = urlData.publicUrl;
+    } catch (err) {
+      alert(err.message || 'Could not upload that image.');
+    } finally {
+      changePictureBtn.disabled = false;
+      changePictureBtn.textContent = originalLabel;
+      avatarFile.value = '';
+    }
   });
 }
 

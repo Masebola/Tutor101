@@ -25,7 +25,7 @@ function renderLetterhead(subscription, module) {
   document.getElementById('letterheadStatus').textContent =
     subscription.status === 'active' ? 'Subscription active' : subscription.status;
   document.getElementById('letterheadExpiry').textContent =
-    subscription.expiry_date ? `Renews ${formatDate(subscription.expiry_date)}` : '';
+    subscription.expiry_date ? `Renews ${formatDateOnly(subscription.expiry_date)}` : '';
 }
 
 async function loadTutor(moduleId) {
@@ -61,10 +61,19 @@ function renderTutorProfile(tutor) {
       <p class="tutor-email"></p>
     </div>
   `;
-  container.querySelector('.avatar').textContent = initials(tutor.full_name);
   container.querySelector('h3').textContent = tutor.full_name;
   container.querySelector('.tutor-academic').textContent = tutor.academic_info || '';
   container.querySelector('.tutor-bio').textContent = tutor.bio || '';
+
+  const avatarEl = container.querySelector('.avatar');
+  if (tutor.avatar_url) {
+    const img = document.createElement('img');
+    img.src = tutor.avatar_url;
+    img.alt = `${tutor.full_name}'s profile picture`;
+    avatarEl.appendChild(img);
+  } else {
+    avatarEl.textContent = initials(tutor.full_name);
+  }
   container.querySelector('.rating-value').textContent = tutor.average_rating ? `${tutor.average_rating}` : 'No ratings yet';
   container.querySelector('.tutor-email').textContent = tutor.email || '';
 }

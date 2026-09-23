@@ -62,6 +62,18 @@ function formatDate(iso) {
   });
 }
 
+// For DATE columns (e.g. expiry_date), not TIMESTAMPTZ ones. A bare
+// "2026-10-15" is parsed as UTC midnight, which shifts to the previous
+// calendar day once converted to local time in any timezone behind UTC —
+// this builds the date from its own Y/M/D parts instead, so it always
+// displays as the date it actually says.
+function formatDateOnly(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-ZA', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
 function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
 }
