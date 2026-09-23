@@ -369,11 +369,18 @@ create policy "student can leave a review for their own session" on reviews for 
 );
 create policy "anyone can read reviews" on reviews for select using (true);
 
+-- ---------- Storage buckets ----------
+-- Creates both buckets here so there's no separate manual step in the
+-- Storage UI. ON CONFLICT DO NOTHING means this is safe to re-run — unlike
+-- the tables above, buckets are never dropped as part of the reset block,
+-- since that would delete any files already uploaded to them.
+insert into storage.buckets (id, name, public) values ('resources', 'resources', false) on conflict (id) do nothing;
+insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true) on conflict (id) do nothing;
+
 -- ---------- Storage: the "resources" bucket ----------
--- Create a bucket named "resources" (leave it Private) in Storage → Buckets
--- first, then run this. Real access control lives in the `resources` table
--- above — you can only get a signed URL for a path if you could first read
--- its row, so these just need to let authenticated users touch the bucket.
+-- Real access control lives in the `resources` table above — you can only
+-- get a signed URL for a path if you could first read its row, so these
+-- just need to let authenticated users touch the bucket.
 create policy "authenticated can read resources bucket" on storage.objects
   for select to authenticated
   using (bucket_id = 'resources');

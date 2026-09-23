@@ -44,16 +44,10 @@ In Settings → API, copy:
 Open `js/supabaseClient.js` and replace `SUPABASE_URL` and `SUPABASE_ANON_KEY`
 with the values from step 4.
 
-## 6. Create the Storage buckets
-In Storage, create two buckets:
-- **`resources`** — leave it **Private**. `schema.sql` already adds the RLS
-  policies that let signed-in users upload to it and read from it — the
-  real gatekeeping happens at the database level (you can only get a
-  signed download link for a file if you could first read its row in the
-  `resources` table), so the bucket itself doesn't need to be public.
-- **`avatars`** — leave it **Public**. Profile pictures are meant to be
-  freely visible, so this one just serves files directly; `schema.sql`
-  still restricts uploads/deletes to each user's own folder.
+## 6. Storage buckets
+`schema.sql` now creates both buckets for you (`resources` as Private,
+`avatars` as Public) along with their access policies — nothing to do here
+manually.
 
 ## 7. Create your first administrator
 There's deliberately no "sign up as admin" option — that matches the outline's
