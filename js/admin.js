@@ -150,6 +150,129 @@ function renderModuleApplications(apps) {
   });
 }
 
+async function loadAllModulesForAdmin() {
+  const { data } = await supabase.from('modules').select('*').order('code');
+  return data || [];
+}
+
+function renderModuleMgmtList(modules) {
+  const list = document.getElementById('moduleMgmtList');
+  if (!modules.length) { list.innerHTML = '<li class="applicant-card"><p>No modules yet.</p></li>'; return; }
+
+  list.innerHTML = modules.map(() => `
+    <li class="applicant-card" data-id="" data-status="">
+      <div class="applicant-main">
+        <div><h3></h3><p class="applicant-meta"></p></div>
+        <span class="tag"></span>
+      </div>
+      <details class="applicant-details">
+        <summary>Edit</summary>
+        <div class="field-grid" style="margin-top:10px;">
+          <div class="form-row"><label>Name</label><input type="text" class="edit-name"></div>
+          <div class="form-row"><label>Department</label><input type="text" class="edit-department"></div>
+        </div>
+        <div class="field-grid">
+          <div class="form-row"><label>Price (R / month)</label><input type="number" class="edit-price" min="0" step="10"></div>
+        </div>
+        <div class="form-row"><label>Description</label><textarea class="edit-description" rows="2"></textarea></div>
+        <button class="btn btn-primary btn-sm" data-action="save-module" type="button">Save changes</button>
+      </details>
+      <div class="applicant-actions">
+        <button class="btn btn-outline btn-sm" data-action="toggle-module-status" type="button"></button>
+      </div>
+    </li>
+  `).join('');
+
+  list.querySelectorAll('.applicant-card').forEach((card, i) => {
+    const m = modules[i];
+    card.dataset.id = m.id;
+    card.dataset.status = m.status;
+    card.querySelector('h3').textContent = `${m.code} — ${m.name}`;
+    card.querySelector('.applicant-meta').textContent = `${m.department || 'No department set'} · R${m.price}/month`;
+
+    const tag = card.querySelector('.tag');
+    tag.textContent = m.status === 'available' ? 'Available' : 'Unavailable';
+    tag.className = m.status === 'available' ? 'tag tag-available' : 'tag tag-rejected';
+
+    card.querySelector('.edit-name').value = m.name;
+    card.querySelector('.edit-department').value = m.department || '';
+    card.querySelector('.edit-price').value = m.price;
+    card.querySelector('.edit-description').value = m.description || '';
+
+    const toggleBtn = card.querySelector('[data-action="toggle-module-status"]');
+    toggleBtn.textContent = m.status === 'available' ? 'Deactivate' : 'Activate';
+  });
+}
+
+const createModuleForm = document.getElementById('createModuleForm');
+if (createModuleForm) {
+  createModuleForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = document.getElementById('modCode').value.trim().toUpperCase();
+    const name = document.getElementById('modName').value.trim();
+    const department = document.getElementById('modDepartment').value.trim();
+    const price = parseFloat(document.getElementById('modPrice').value);
+    const description = document.getElementById('modDescription').value.trim();
+    if (!code || !name) return;
+
+    const submitBtn = createModuleForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    try {
+      const { error } = await supabase.from('modules').insert({ code, name, department: department || null, price, description: description || null });
+      if (error) throw error;
+      createModuleForm.reset();
+      document.getElementById('modPrice').value = 100;
+      renderModuleMgmtList(await loadAllModulesForAdmin());
+      loadOverview();
+    } catch (err) {
+      alert(err.message || 'Could not create that module — check the code is unique.');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+document.addEventListener('click', async (e) => {
+  const saveBtn = e.target.closest('[data-action="save-module"]');
+  const toggleBtn = e.target.closest('[data-action="toggle-module-status"]');
+  if (!saveBtn && !toggleBtn) return;
+
+  const card = (saveBtn || toggleBtn).closest('.applicant-card');
+  const id = card.dataset.id;
+
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    try {
+      const { error } = await supabase.from('modules').update({
+        name: card.querySelector('.edit-name').value.trim(),
+        department: card.querySelector('.edit-department').value.trim() || null,
+        price: parseFloat(card.querySelector('.edit-price').value),
+        description: card.querySelector('.edit-description').value.trim() || null,
+      }).eq('id', id);
+      if (error) throw error;
+      renderModuleMgmtList(await loadAllModulesForAdmin());
+    } catch (err) {
+      alert(err.message || 'Could not save those changes.');
+      saveBtn.disabled = false;
+    }
+  }
+
+  if (toggleBtn) {
+    toggleBtn.disabled = true;
+    const newStatus = card.dataset.status === 'available' ? 'unavailable' : 'available';
+    try {
+      const { error } = await supabase.from('modules').update({ status: newStatus }).eq('id', id);
+      if (error) throw error;
+      renderModuleMgmtList(await loadAllModulesForAdmin());
+      loadOverview();
+    } catch (err) {
+      alert(err.message || 'Could not update that module.');
+      toggleBtn.disabled = false;
+    }
+  }
+});
+
 async function refreshTutors() {
   renderPendingTutors(await loadPendingTutors());
   renderApprovedTutors(await loadApprovedTutors());
@@ -172,6 +295,7 @@ async function init() {
     renderApprovedTutors(await loadApprovedTutors());
     renderRejectedTutors(await loadRejectedTutors());
     renderModuleApplications(await loadModuleApplications());
+    renderModuleMgmtList(await loadAllModulesForAdmin());
   } catch (err) {
     showFatalError(`Couldn't load the admin dashboard: ${err.message}. Check your connection and try refreshing.`);
   }

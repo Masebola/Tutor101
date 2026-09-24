@@ -7,23 +7,18 @@ Go to supabase.com, create a new project, and wait for it to finish provisioning
 Open the SQL editor in your Supabase dashboard, paste in the entire contents
 of `supabase/schema.sql`, and run it. This creates every table, the
 auto-profile trigger, all the Row Level Security policies, and the Storage
-policies for the resources bucket, in one go.
+buckets and policies, in one go.
 
 **Whenever this file changes** (I'll say so when it does), re-run the whole
-thing again the same way. The script starts by dropping everything Tutor 101
-owns before recreating it, so it's always safe to paste the *entire* file in
-and run it — don't try to run just the new part, and don't skip it if you
-see "already exists" errors from an older attempt; that error means it's
-time to run the current full file, not that you should leave it alone.
-
-If you'd already tried signing up before running the current version, do one
-more thing afterward: go to Authentication → Users and delete any test
-accounts you created. Dropping and recreating the `profiles` table doesn't
-touch these — they're a separate system table — so a leftover one will make
-Supabase say "User already registered" if you try that email again, and if
-its profile row never got created properly (e.g. from a broken trigger),
-logging in with it won't work right either. Cleanest to start those emails
-fresh.
+thing again the same way — paste the entire file in and run it, not just the
+new part. It's safe to do this as often as you like: types and tables are
+only created if they don't already exist, and policies are dropped and
+recreated by name rather than by dropping their table. **None of your data —
+registered accounts, profiles, modules, sessions, anything — gets touched.**
+An earlier version of this file dropped and recreated every table on each
+run, which silently wiped every profile row while leaving the matching
+Authentication login behind (looking like the account "disappeared" even
+though it hadn't) — that's fixed now, this version never drops a table.
 
 ## 3. Turn on email confirmation
 In Authentication → Settings, make sure "Confirm email" is switched on — the
@@ -66,6 +61,10 @@ requirement that admin accounts aren't self-registered. To get one:
   tutor/module approvals, and subscriptions.
 - `modules.html` — browsing modules and subscribing, with a simulated
   payment step that creates a real `subscriptions` row.
+- `admin.html` → Manage modules — create new modules, edit an existing
+  one's name/department/price/description, and activate/deactivate it.
+  The RLS already allowed this (`admins manage modules` covers all of it);
+  this was just the missing UI.
 - Tutor profile pictures — uploaded from the tutor's own "My profile"
   panel (there's no session available at registration time to authorize a
   Storage upload, so this had to live on a page a tutor visits after
@@ -73,6 +72,17 @@ requirement that admin accounts aren't self-registered. To get one:
   module dashboard's Tutor profile panel.
 
 ## What isn't built yet
+- **Deleting a module outright** — intentionally not built. A module has
+  sessions, resources, subscriptions and more hanging off it (all set to
+  cascade-delete), so a stray click on a hard "Delete" button could wipe
+  real student data. Deactivating (already built) removes it from
+  "Available modules" without touching anything that depends on it.
+- **Viewing which tutor teaches a module from the module's own row** —
+  right now that relationship is visible from the tutor/application side
+  (Tutor applications, Module applications), not from Manage Modules.
+- **Admin resource moderation** (outline section 22 mentions removing
+  inappropriate uploads) — no UI for an admin to browse or remove a
+  tutor's uploaded resources yet.
 - **A student "my profile" panel** — there's currently no page for a
   student to set their own profile picture or edit their details after
   registering; tutors have this, students don't yet.
@@ -89,11 +99,11 @@ requirement that admin accounts aren't self-registered. To get one:
 
 ## Troubleshooting
 If sign-up fails with something like "Database error saving new user" after
-re-running the current schema and clearing old test accounts, the generic
-error on screen won't say why — but Supabase's dashboard will. Check
-Logs → Postgres Logs (and Logs → Auth Logs) right after a failed attempt;
-the actual Postgres error (e.g. which constraint or column it choked on)
-shows up there even though the app only ever sees the generic message.
+re-running the current schema, the generic error on screen won't say why —
+but Supabase's dashboard will. Check Logs → Postgres Logs (and Logs → Auth
+Logs) right after a failed attempt; the actual Postgres error (e.g. which
+constraint or column it choked on) shows up there even though the app only
+ever sees the generic message.
 
 One specific case worth knowing about: if that log shows something like
 `type "user_role" does not exist` even though the schema clearly created

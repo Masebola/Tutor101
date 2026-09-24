@@ -1,71 +1,77 @@
 -- ============================================================
 -- Tutor 101 — Supabase schema, triggers and Row Level Security
 --
--- Safe to run from scratch, and safe to RE-run any time this file is
--- updated (e.g. after a fix in a later chat message). Postgres can't
--- re-create something that already exists, so without a reset block a
--- second run just fails on the first `create type` and stops — leaving
--- your database on a mix of old and new. The block below drops
--- everything Tutor 101 owns first, so every run starts from a clean,
--- fully up-to-date slate.
+-- Safe to run from scratch, AND safe to re-run any time this file is
+-- updated (e.g. after a fix in a later chat message) — WITHOUT losing
+-- existing data. Earlier versions of this file dropped and recreated
+-- every table on each run, which also wiped every registered user's
+-- `profiles` row (their auth.users login survived, since that's
+-- Supabase's own separate table, but their profile — role, name,
+-- everything — did not). That was a real bug, not intended behavior.
 --
--- ⚠️ This deletes all Tutor 101 rows (test accounts, sessions, etc.) —
--- fine while you're still building, since there's no real data to lose.
--- It does NOT touch other Supabase projects' data or auth.users itself;
--- see supabase/SETUP.md if you need to also clear out test accounts
--- from Authentication → Users.
+-- This version never drops a table. Types and tables are created only
+-- if they don't already exist; functions use CREATE OR REPLACE (which
+-- updates behavior without touching data); triggers and RLS policies
+-- are dropped and recreated by name (safe — they hold no data of their
+-- own). Re-running this file after a future update will pick up
+-- whatever changed and leave every existing row exactly as it was.
+--
+-- One consequence: if a future change needs a new COLUMN on an
+-- existing table, this file will need an explicit
+-- `alter table ... add column if not exists ...` for it — a bare
+-- `create table if not exists` does nothing to a table that's already
+-- there, columns included.
 -- ============================================================
-
-drop trigger if exists on_auth_user_created on auth.users;
-drop trigger if exists protect_profile_fields_trigger on profiles;
-
-drop table if exists reviews cascade;
-drop table if exists notifications cascade;
-drop table if exists support_requests cascade;
-drop table if exists announcements cascade;
-drop table if exists resources cascade;
-drop table if exists sessions cascade;
-drop table if exists subscriptions cascade;
-drop table if exists tutor_modules cascade;
-drop table if exists modules cascade;
-drop table if exists profiles cascade;
-
-drop function if exists public.handle_new_user() cascade;
-drop function if exists public.protect_profile_fields() cascade;
-drop function if exists public.is_admin() cascade;
-
-drop type if exists user_role cascade;
-drop type if exists tutor_status cascade;
-drop type if exists module_status cascade;
-drop type if exists application_status cascade;
-drop type if exists subscription_status cascade;
-drop type if exists request_status cascade;
-drop type if exists resource_category cascade;
-
--- storage.objects is Supabase's own table, shared across the project —
--- drop only the policies this file adds to it, never the table itself.
-drop policy if exists "authenticated can read resources bucket" on storage.objects;
-drop policy if exists "authenticated can upload to resources bucket" on storage.objects;
-drop policy if exists "uploader can delete their own resource files" on storage.objects;
-drop policy if exists "authenticated can upload their own avatar" on storage.objects;
-drop policy if exists "authenticated can replace their own avatar" on storage.objects;
-drop policy if exists "authenticated can delete their own avatar" on storage.objects;
 
 create extension if not exists "uuid-ossp";
 
--- ---------- Enums ----------
-create type user_role            as enum ('student', 'tutor', 'admin');
-create type tutor_status         as enum ('pending', 'approved', 'rejected', 'suspended');
-create type module_status        as enum ('available', 'unavailable');
-create type application_status   as enum ('pending', 'approved', 'rejected');
-create type subscription_status  as enum ('active', 'expired', 'cancelled');
-create type request_status       as enum ('open', 'in_progress', 'answered', 'closed');
-create type resource_category    as enum ('notes', 'study_guide', 'past_paper');
+-- ---------- Enums (Postgres has no CREATE TYPE IF NOT EXISTS) ----------
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'user_role') then
+    create type user_role as enum ('student', 'tutor', 'admin');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'tutor_status') then
+    create type tutor_status as enum ('pending', 'approved', 'rejected', 'suspended');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'module_status') then
+    create type module_status as enum ('available', 'unavailable');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'application_status') then
+    create type application_status as enum ('pending', 'approved', 'rejected');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'subscription_status') then
+    create type subscription_status as enum ('active', 'expired', 'cancelled');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'request_status') then
+    create type request_status as enum ('open', 'in_progress', 'answered', 'closed');
+  end if;
+end $$;
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'resource_category') then
+    create type resource_category as enum ('notes', 'study_guide', 'past_paper');
+  end if;
+end $$;
 
 -- ---------- Tables ----------
 
 -- One row per auth.users entry — role lives here, not in the login form.
-create table profiles (
+create table if not exists profiles (
   id             uuid primary key references auth.users(id) on delete cascade,
   role           user_role not null default 'student',
   full_name      text not null,
@@ -79,7 +85,7 @@ create table profiles (
   created_at     timestamptz not null default now()
 );
 
-create table modules (
+create table if not exists modules (
   id          uuid primary key default uuid_generate_v4(),
   code        text unique not null,
   name        text not null,
@@ -91,7 +97,7 @@ create table modules (
 );
 
 -- A tutor's application to (and eventual assignment on) a module.
-create table tutor_modules (
+create table if not exists tutor_modules (
   id         uuid primary key default uuid_generate_v4(),
   tutor_id   uuid references profiles(id) on delete cascade,
   module_id  uuid references modules(id) on delete cascade,
@@ -99,7 +105,7 @@ create table tutor_modules (
   applied_at timestamptz not null default now()
 );
 
-create table subscriptions (
+create table if not exists subscriptions (
   id           uuid primary key default uuid_generate_v4(),
   student_id   uuid references profiles(id) on delete cascade,
   module_id    uuid references modules(id) on delete cascade,
@@ -109,7 +115,7 @@ create table subscriptions (
   expiry_date  date not null
 );
 
-create table sessions (
+create table if not exists sessions (
   id               uuid primary key default uuid_generate_v4(),
   module_id        uuid references modules(id) on delete cascade,
   tutor_id         uuid references profiles(id) on delete cascade,
@@ -123,7 +129,7 @@ create table sessions (
   created_at       timestamptz not null default now()
 );
 
-create table resources (
+create table if not exists resources (
   id            uuid primary key default uuid_generate_v4(),
   module_id     uuid references modules(id) on delete cascade,
   uploaded_by   uuid references profiles(id) on delete set null,
@@ -133,7 +139,7 @@ create table resources (
   uploaded_at   timestamptz not null default now()
 );
 
-create table announcements (
+create table if not exists announcements (
   id         uuid primary key default uuid_generate_v4(),
   module_id  uuid references modules(id) on delete cascade,
   posted_by  uuid references profiles(id) on delete set null,
@@ -142,7 +148,7 @@ create table announcements (
   created_at timestamptz not null default now()
 );
 
-create table support_requests (
+create table if not exists support_requests (
   id         uuid primary key default uuid_generate_v4(),
   student_id uuid references profiles(id) on delete cascade,
   module_id  uuid references modules(id) on delete cascade,
@@ -153,7 +159,7 @@ create table support_requests (
   created_at timestamptz not null default now()
 );
 
-create table notifications (
+create table if not exists notifications (
   id         uuid primary key default uuid_generate_v4(),
   user_id    uuid references profiles(id) on delete cascade,
   message    text not null,
@@ -161,7 +167,7 @@ create table notifications (
   created_at timestamptz not null default now()
 );
 
-create table reviews (
+create table if not exists reviews (
   id         uuid primary key default uuid_generate_v4(),
   student_id uuid references profiles(id) on delete cascade,
   tutor_id   uuid references profiles(id) on delete cascade,
@@ -177,17 +183,21 @@ create table reviews (
 -- an application is rejected. These partial indexes only enforce uniqueness
 -- among the "live" rows, so history can pile up and a fresh attempt still
 -- works.
-create unique index subscriptions_one_active_per_module
+create unique index if not exists subscriptions_one_active_per_module
   on subscriptions (student_id, module_id) where status = 'active';
 
-create unique index tutor_modules_one_live_application
+create unique index if not exists tutor_modules_one_live_application
   on tutor_modules (tutor_id, module_id) where status in ('pending', 'approved');
 
 -- ---------- Seed the three example modules from the outline ----------
+-- ON CONFLICT DO NOTHING: safe to re-run without erroring or duplicating,
+-- and won't touch a module you've since edited or added through the admin
+-- screen.
 insert into modules (code, name, department, description, price) values
   ('COM3217', 'Database Design',      'Computer Science', 'Introduction to database concepts, design and implementation.', 100),
   ('MAT201',  'Mathematics II',       'Mathematics',       'Calculus and linear algebra fundamentals for second-year students.', 100),
-  ('CSC302',  'Software Engineering', 'Computer Science', 'Software development lifecycles, design patterns and team practice.', 100);
+  ('CSC302',  'Software Engineering', 'Computer Science', 'Software development lifecycles, design patterns and team practice.', 100)
+on conflict (code) do nothing;
 
 -- ---------- Auto-create a profile row whenever someone signs up ----------
 -- Registration writes role/full_name/student_number/academic_info into
@@ -214,6 +224,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
@@ -236,27 +247,6 @@ returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
 $$;
-
--- profiles: everyone can see their own row; admins see everyone.
-create policy "view own profile"        on profiles for select using (auth.uid() = id);
-create policy "admins view all profiles" on profiles for select using (public.is_admin());
-create policy "student can view their module's tutor" on profiles for select using (
-  role = 'tutor' and exists (
-    select 1 from tutor_modules tm
-    join subscriptions s on s.module_id = tm.module_id
-    where tm.tutor_id = profiles.id and tm.status = 'approved'
-      and s.student_id = auth.uid() and s.status = 'active'
-  )
-);
-create policy "tutor can view their students" on profiles for select using (
-  role = 'student' and exists (
-    select 1 from subscriptions s
-    join tutor_modules tm on tm.module_id = s.module_id
-    where s.student_id = profiles.id and tm.tutor_id = auth.uid() and tm.status = 'approved'
-  )
-);
-create policy "update own profile"       on profiles for update using (auth.uid() = id);
-create policy "admins update any profile" on profiles for update using (public.is_admin());
 
 -- RLS above only restricts which ROW a user can update, not which COLUMNS —
 -- without this, any signed-in user could set role='admin' on their own row
@@ -285,13 +275,69 @@ begin
 end;
 $$;
 
+drop trigger if exists protect_profile_fields_trigger on profiles;
 create trigger protect_profile_fields_trigger
   before update on profiles
   for each row execute procedure public.protect_profile_fields();
 
--- modules: available modules are public; only admins write.
+-- ---------- Row Level Security policies ----------
+-- Policies aren't data, so dropping and recreating them by name (rather
+-- than via a table drop) is always safe — this is what lets this whole
+-- file be re-run without touching a single row.
+drop policy if exists "view own profile" on profiles;
+drop policy if exists "admins view all profiles" on profiles;
+drop policy if exists "student can view their module's tutor" on profiles;
+drop policy if exists "tutor can view their students" on profiles;
+drop policy if exists "update own profile" on profiles;
+drop policy if exists "admins update any profile" on profiles;
+drop policy if exists "view available modules" on modules;
+drop policy if exists "admins manage modules" on modules;
+drop policy if exists "tutor views own applications" on tutor_modules;
+drop policy if exists "subscribed students can view their module's tutor link" on tutor_modules;
+drop policy if exists "tutor applies for a module" on tutor_modules;
+drop policy if exists "admins decide applications" on tutor_modules;
+drop policy if exists "student views own subscriptions" on subscriptions;
+drop policy if exists "student subscribes" on subscriptions;
+drop policy if exists "admins view all subscriptions" on subscriptions;
+drop policy if exists "sessions visible to tutor, admin, subscribed students" on sessions;
+drop policy if exists "tutor manages own sessions" on sessions;
+drop policy if exists "resources visible to tutor, admin, subscribed students" on resources;
+drop policy if exists "tutor manages own resources" on resources;
+drop policy if exists "announcements visible to tutor, admin, subscribed students" on announcements;
+drop policy if exists "tutor posts announcements" on announcements;
+drop policy if exists "student can view own requests" on support_requests;
+drop policy if exists "student can submit requests" on support_requests;
+drop policy if exists "tutor views requests for their module" on support_requests;
+drop policy if exists "tutor answers requests for their module" on support_requests;
+drop policy if exists "user manages own notifications" on notifications;
+drop policy if exists "student can leave a review for their own session" on reviews;
+drop policy if exists "anyone can read reviews" on reviews;
+
+-- profiles: everyone can see their own row; admins see everyone.
+create policy "view own profile"        on profiles for select using (auth.uid() = id);
+create policy "admins view all profiles" on profiles for select using (public.is_admin());
+create policy "student can view their module's tutor" on profiles for select using (
+  role = 'tutor' and exists (
+    select 1 from tutor_modules tm
+    join subscriptions s on s.module_id = tm.module_id
+    where tm.tutor_id = profiles.id and tm.status = 'approved'
+      and s.student_id = auth.uid() and s.status = 'active'
+  )
+);
+create policy "tutor can view their students" on profiles for select using (
+  role = 'student' and exists (
+    select 1 from subscriptions s
+    join tutor_modules tm on tm.module_id = s.module_id
+    where s.student_id = profiles.id and tm.tutor_id = auth.uid() and tm.status = 'approved'
+  )
+);
+create policy "update own profile"       on profiles for update using (auth.uid() = id);
+create policy "admins update any profile" on profiles for update using (public.is_admin());
+
+-- modules: available modules are public; only admins write (create, edit,
+-- deactivate — this already covers the admin module-management screen).
 create policy "view available modules" on modules for select using (status = 'available' or public.is_admin());
-create policy "admins manage modules"  on modules for all    using (public.is_admin());
+create policy "admins manage modules"  on modules for all    using (public.is_admin()) with check (public.is_admin());
 
 -- tutor_modules: a tutor sees/creates their own applications; admins decide them.
 create policy "tutor views own applications" on tutor_modules for select using (tutor_id = auth.uid() or public.is_admin());
@@ -371,11 +417,19 @@ create policy "anyone can read reviews" on reviews for select using (true);
 
 -- ---------- Storage buckets ----------
 -- Creates both buckets here so there's no separate manual step in the
--- Storage UI. ON CONFLICT DO NOTHING means this is safe to re-run — unlike
--- the tables above, buckets are never dropped as part of the reset block,
--- since that would delete any files already uploaded to them.
+-- Storage UI. ON CONFLICT DO NOTHING: safe to re-run, and never touches
+-- files already uploaded to them.
 insert into storage.buckets (id, name, public) values ('resources', 'resources', false) on conflict (id) do nothing;
 insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true) on conflict (id) do nothing;
+
+-- storage.objects is Supabase's own table, shared across the project —
+-- drop only the policies this file adds to it, never the table itself.
+drop policy if exists "authenticated can read resources bucket" on storage.objects;
+drop policy if exists "authenticated can upload to resources bucket" on storage.objects;
+drop policy if exists "uploader can delete their own resource files" on storage.objects;
+drop policy if exists "authenticated can upload their own avatar" on storage.objects;
+drop policy if exists "authenticated can replace their own avatar" on storage.objects;
+drop policy if exists "authenticated can delete their own avatar" on storage.objects;
 
 -- ---------- Storage: the "resources" bucket ----------
 -- Real access control lives in the `resources` table above — you can only
@@ -394,11 +448,10 @@ create policy "uploader can delete their own resource files" on storage.objects
   using (bucket_id = 'resources' and owner = auth.uid());
 
 -- ---------- Storage: the "avatars" bucket ----------
--- Create a bucket named "avatars" and leave it Public (unlike "resources")
--- — profile pictures are meant to be freely visible wherever a profile is
--- shown, so there's no read policy needed here; a public bucket serves
--- files directly. These policies only cover writes, and only let someone
--- touch their own folder (named after their user id).
+-- Public (unlike "resources") — profile pictures are meant to be freely
+-- visible wherever a profile is shown, so there's no read policy needed
+-- here; a public bucket serves files directly. These only cover writes,
+-- and only let someone touch their own folder (named after their user id).
 create policy "authenticated can upload their own avatar" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'avatars' and owner = auth.uid());

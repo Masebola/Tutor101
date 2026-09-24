@@ -32,6 +32,7 @@
       <button class="dash-tab" data-panel="admin-overview" type="button">Overview</button>
       <button class="dash-tab is-active" data-panel="admin-tutors" type="button">Tutor applications <span class="badge" id="pendingTutorBadge">0</span></button>
       <button class="dash-tab" data-panel="admin-modules" type="button">Module applications <span class="badge" id="pendingModuleBadge">0</span></button>
+      <button class="dash-tab" data-panel="admin-module-mgmt" type="button">Manage modules</button>
     </nav>
   </aside>
 
@@ -65,6 +66,41 @@
       <h1 class="section-title">Module applications</h1>
       <p>Approved tutors applying to teach a specific module. Each application is reviewed on its own — a tutor can be approved for one module and rejected for another.</p>
       <ul class="applicant-list" id="moduleApplicationsList"><li class="applicant-card"><p>Loading…</p></li></ul>
+    </section>
+
+    <section class="dash-panel" id="panel-admin-module-mgmt">
+      <h1 class="section-title">Manage modules</h1>
+
+      <form class="panel-form" id="createModuleForm">
+        <div class="field-grid">
+          <div class="form-row">
+            <label for="modCode">Module code</label>
+            <input type="text" id="modCode" placeholder="e.g. COM3220" required>
+          </div>
+          <div class="form-row">
+            <label for="modName">Module name</label>
+            <input type="text" id="modName" placeholder="e.g. Web Development" required>
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="form-row">
+            <label for="modDepartment">Department</label>
+            <input type="text" id="modDepartment" placeholder="e.g. Computer Science">
+          </div>
+          <div class="form-row">
+            <label for="modPrice">Price (R / month)</label>
+            <input type="number" id="modPrice" value="100" min="0" step="10" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="modDescription">Description</label>
+          <textarea id="modDescription" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Create module</button>
+      </form>
+
+      <h2 class="resource-group-title">Existing modules</h2>
+      <ul class="applicant-list" id="moduleMgmtList"><li class="applicant-card"><p>Loading…</p></li></ul>
     </section>
 
   </div>
